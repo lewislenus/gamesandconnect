@@ -2,52 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Games and Connect Design System - Venmo-inspired with Ghanaian vibrancy */
+/* Games and Connect Design System - GameFiesta inspired */
 
 @layer base {
   :root {
-    --background: 250 100% 99%;
-    --foreground: 222 60% 15%;
+    --background: 0 0% 100%;
+    --foreground: 222 84% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 60% 15%;
+    --card-foreground: 222 84% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 60% 15%;
+    --popover-foreground: 222 84% 8%;
 
-    /* Vibrant primary green inspired by Ghanaian nature */
-    --primary: 142 76% 36%;
+    /* GameFiesta-inspired teal/green theme */
+    --primary: 170 60% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 142 76% 45%;
+    --primary-glow: 170 60% 55%;
 
-    /* Warm orange accent */
+    /* Secondary orange accent */
     --secondary: 24 95% 53%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 222 20% 55%;
+    --muted: 210 40% 98%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 199 89% 48%;
+    --accent: 170 60% 35%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 142 76% 36%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 170 60% 45%;
 
     /* Custom design tokens */
-    --hero-gradient: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(199 89% 48%) 100%);
-    --card-shadow: 0 4px 20px -2px hsl(222 60% 15% / 0.1);
-    --card-shadow-hover: 0 8px 30px -2px hsl(222 60% 15% / 0.15);
+    --hero-gradient: linear-gradient(135deg, hsl(170 60% 45%) 0%, hsl(170 60% 55%) 100%);
+    --card-shadow: 0 2px 10px -2px hsl(222 84% 8% / 0.08);
+    --card-shadow-hover: 0 8px 25px -2px hsl(222 84% 8% / 0.12);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* Event category colors */
-    --gaming: 267 57% 50%;
+    --gaming: 270 60% 50%;
     --travel: 24 95% 53%;
-    --social: 199 89% 48%;
-    --trivia: 142 76% 36%;
+    --social: 200 89% 48%;
+    --trivia: 170 60% 45%;
 
     --radius: 0.5rem;
 
@@ -113,6 +113,17 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer utilities {
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+  }
+  
+  .animate-marquee {
+    animation: marquee 30s linear infinite;
   }
 }

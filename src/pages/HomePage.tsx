@@ -1,170 +1,146 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, Gamepad2, Camera, ArrowRight, MapPin, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Calendar, MapPin, Clock, Play } from 'lucide-react';
 
 export default function HomePage() {
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Trivia Friday",
-      date: "Dec 15, 2024",
-      time: "7:00 PM",
-      location: "Online",
-      category: "trivia",
-      spots: "20 spots left"
-    },
-    {
-      id: 2,
-      title: "Accra Beach Day",
-      date: "Dec 22, 2024", 
-      time: "10:00 AM",
-      location: "Laboma Beach",
-      category: "travel",
-      spots: "5 spots left"
-    },
-    {
-      id: 3,
-      title: "Gaming Tournament",
-      date: "Dec 28, 2024",
-      time: "2:00 PM", 
-      location: "East Legon",
-      category: "gaming",
-      spots: "12 spots left"
-    }
-  ];
-
-  const stats = [
-    { label: "Active Members", value: "500+", icon: Users },
-    { label: "Events This Year", value: "48", icon: Calendar },
-    { label: "Cities Reached", value: "8", icon: MapPin },
-    { label: "Photos Shared", value: "2.5K", icon: Camera },
-  ];
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary via-accent to-secondary overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent"></div>
+      <section className="relative min-h-[90vh] flex items-center justify-center bg-background overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl"></div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="text-center">
-            <h1 className="text-5xl lg:text-7xl font-bold text-white mb-6 animate-fade-in">
-              Games & Connect
-            </h1>
-            <p className="text-xl lg:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Ghana's premier youth community bringing people together through games, travel experiences, and unforgettable social events.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button variant="hero" size="lg" className="text-lg px-8 py-4 shadow-2xl">
-                Join the Community
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Link to="/events">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/10 border-white/20 text-white hover:bg-white/20">
-                  See Events
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="text-left">
+              <div className="mb-8">
+                <div className="text-sm font-semibold text-primary mb-4 tracking-wider uppercase">
+                  Game & Connect
+                </div>
+                <h1 className="text-6xl lg:text-8xl font-black text-foreground mb-6 leading-none">
+                  Level Up!
+                </h1>
+                <p className="text-xl text-muted-foreground mb-8 max-w-lg leading-relaxed">
+                  Get ready to play, compete, dance, connect and explore at Ghana's biggest gaming event – Games & Connect! Join us for a day of epic battles, thrilling challenges, and unforgettable connections with fellow gamers.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 mb-12">
+                <Button variant="outline" size="lg" className="rounded-full text-base px-8 py-6">
+                  <Play className="mr-2 h-5 w-5" />
+                  Watch past events
                 </Button>
-              </Link>
+                <Button size="lg" className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90">
+                  Get tickets
+                </Button>
+              </div>
+
+              {/* Event Info */}
+              <div className="bg-muted/30 backdrop-blur-sm rounded-2xl p-6 max-w-md">
+                <div className="text-right mb-4">
+                  <div className="text-2xl font-bold text-foreground">8th June, 2025</div>
+                  <div className="text-lg text-muted-foreground">Accra, GH</div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Ghana is stressful enough. At Games & Connect, we are creating a safe place to relax, play, enjoy good food and connect with amazing people.
+                </p>
+              </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-2 inline-block">
-                    <stat.icon className="h-8 w-8 text-white mx-auto" />
+            <div className="relative">
+              {/* Video/Image Placeholder */}
+              <div className="aspect-square bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+                <div className="relative text-center">
+                  <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <Play className="w-8 h-8 text-primary" />
                   </div>
-                  <div className="text-3xl font-bold text-white">{stat.value}</div>
-                  <div className="text-white/80">{stat.label}</div>
+                  <div className="text-sm text-muted-foreground">Watch our highlights</div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Upcoming Events */}
-      <section className="py-20 bg-muted/30">
+      {/* Community Section */}
+      <section className="py-20 bg-muted/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4">What's Coming Up?</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Don't miss out on these exciting upcoming events - join the fun!
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {upcomingEvents.map((event) => (
-              <Card key={event.id} className="hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] border-0 shadow-lg">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      event.category === 'trivia' ? 'bg-trivia/10 text-trivia' :
-                      event.category === 'travel' ? 'bg-travel/10 text-travel' :
-                      'bg-gaming/10 text-gaming'
-                    }`}>
-                      {event.category.toUpperCase()}
-                    </span>
-                    <span className="text-xs text-primary font-medium">{event.spots}</span>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="relative">
+              {/* Gaming Traffic Light Illustration */}
+              <div className="relative bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-3xl p-8 aspect-square flex items-center justify-center">
+                <div className="w-32 h-48 bg-foreground rounded-lg flex items-center justify-center relative">
+                  <div className="absolute top-4 left-4 right-4">
+                    <div className="h-1 bg-red-500 rounded-full mb-2"></div>
+                    <div className="h-1 bg-yellow-500 rounded-full mb-2"></div>
+                    <div className="h-1 bg-green-500 rounded-full"></div>
                   </div>
-                  <CardTitle className="text-xl">{event.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-muted-foreground">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{event.date}</span>
-                    </div>
-                    <div className="flex items-center text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{event.time}</span>
-                    </div>
-                    <div className="flex items-center text-muted-foreground">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{event.location}</span>
-                    </div>
-                  </div>
-                  <Button 
-                    variant={event.category === 'trivia' ? 'gaming' : event.category === 'travel' ? 'community' : 'default'}
-                    className="w-full"
-                  >
-                    Join Event
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <div className="text-4xl font-bold text-background">6.0</div>
+                </div>
+                <div className="absolute -top-4 -left-4 w-8 h-8">
+                  <div className="w-4 h-8 bg-yellow-600 rounded-t-full"></div>
+                  <div className="w-8 h-2 bg-yellow-600 -mt-1"></div>
+                </div>
+                <div className="absolute -top-4 -right-4 w-8 h-8">
+                  <div className="w-4 h-8 bg-yellow-600 rounded-t-full ml-auto"></div>
+                  <div className="w-8 h-2 bg-yellow-600 -mt-1"></div>
+                </div>
+              </div>
+            </div>
 
-          <div className="text-center">
-            <Link to="/events">
-              <Button variant="outline" size="lg">
-                View All Events
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <div>
+              <h2 className="text-5xl font-black text-foreground mb-6">
+                The <span className="text-primary">largest</span> game community in the city of
+              </h2>
+              <h3 className="text-4xl font-bold text-primary mb-8">
+                Accra
+              </h3>
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                Ghana is stressful enough. At Games & Connect, we are creating a safe place to relax, play, enjoy good food and connect with amazing people.
+              </p>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Upcoming Events Ticker */}
+      <section className="py-4 bg-foreground text-background overflow-hidden">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center space-x-8 mx-8">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4" />
+                <span className="font-semibold">Date: 08-06-2025</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4" />
+                <span className="font-semibold">Time: 3pm</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4" />
+                <span className="font-semibold">Venue: TBD</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 bg-gradient-to-r from-primary to-accent">
+      <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to Join the Adventure?
+          <h2 className="text-5xl font-black text-foreground mb-6">
+            Ready to Level Up?
           </h2>
-          <p className="text-xl text-white/90 mb-8 leading-relaxed">
-            Connect with like-minded young people, create lasting memories, and be part of Ghana's most vibrant community.
+          <p className="text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto">
+            Connect with like-minded young people, create lasting memories, and be part of Ghana's most vibrant gaming community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg" className="bg-white text-primary hover:bg-white/90">
+            <Button size="lg" className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90">
+              Get your tickets now
+            </Button>
+            <Button variant="outline" size="lg" className="rounded-full text-base px-8 py-6">
               Join WhatsApp Group
             </Button>
-            <Link to="/community">
-              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-                Learn More
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
