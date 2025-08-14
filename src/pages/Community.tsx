@@ -152,13 +152,25 @@ export default function Community() {
             <h3 className="text-2xl font-bold text-foreground mb-4">Ready to Connect?</h3>
             <p className="text-muted-foreground mb-6">Join our main WhatsApp group with 500+ members</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="hero" size="lg">
+              <Button 
+                variant="hero" 
+                size="lg"
+                onClick={() => window.open('https://chat.whatsapp.com/invite-link', '_blank')}
+              >
                 Join Main Group
               </Button>
-              <Button variant="outline" size="lg">
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => window.open('https://chat.whatsapp.com/accra-link', '_blank')}
+              >
                 Join Accra Group
               </Button>
-              <Button variant="outline" size="lg">
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => window.open('https://chat.whatsapp.com/kumasi-link', '_blank')}
+              >
                 Join Kumasi Group
               </Button>
             </div>

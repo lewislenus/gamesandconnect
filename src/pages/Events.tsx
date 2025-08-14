@@ -285,7 +285,11 @@ export default function Events() {
             Join our community and suggest events you'd like to see. We're always open to new ideas!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg">
+            <Button 
+              variant="hero" 
+              size="lg"
+              onClick={() => window.open('/community', '_self')}
+            >
               Join WhatsApp Group
             </Button>
             <Button variant="outline" size="lg">

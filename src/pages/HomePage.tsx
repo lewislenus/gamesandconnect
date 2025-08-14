@@ -25,11 +25,20 @@ export default function HomePage() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Button variant="outline" size="lg" className="rounded-full text-base px-8 py-6">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="rounded-full text-base px-8 py-6"
+                  onClick={() => window.open('/gallery', '_self')}
+                >
                   <Play className="mr-2 h-5 w-5" />
                   Watch past events
                 </Button>
-                <Button size="lg" className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90">
+                <Button 
+                  size="lg" 
+                  className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90"
+                  onClick={() => window.open('/events', '_self')}
+                >
                   Get tickets
                 </Button>
               </div>
@@ -183,7 +192,11 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-primary">{event.price}</span>
-                  <Button size="sm" className="rounded-full">
+                  <Button 
+                    size="sm" 
+                    className="rounded-full"
+                    onClick={() => window.open('/events', '_self')}
+                  >
                     Register
                   </Button>
                 </div>
@@ -236,6 +249,108 @@ export default function HomePage() {
                 <p className="text-muted-foreground leading-relaxed">{offer.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Teams Section */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black text-foreground mb-6">
+              Choose Your <span className="text-primary">Team</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Join one of our four legendary teams and compete for glory, prizes, and bragging rights!
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                name: "Team Red",
+                color: "red",
+                bgColor: "bg-red-500",
+                textColor: "text-red-500",
+                borderColor: "border-red-500",
+                motto: "Fire & Passion",
+                members: "485",
+                wins: "127"
+              },
+              {
+                name: "Team Yellow",
+                color: "yellow", 
+                bgColor: "bg-yellow-500",
+                textColor: "text-yellow-600",
+                borderColor: "border-yellow-500",
+                motto: "Lightning Speed",
+                members: "423",
+                wins: "134"
+              },
+              {
+                name: "Team Green",
+                color: "green",
+                bgColor: "bg-green-500", 
+                textColor: "text-green-500",
+                borderColor: "border-green-500",
+                motto: "Nature's Force",
+                members: "467",
+                wins: "119"
+              },
+              {
+                name: "Team Blue",
+                color: "blue",
+                bgColor: "bg-blue-500",
+                textColor: "text-blue-500", 
+                borderColor: "border-blue-500",
+                motto: "Ocean Deep",
+                members: "512",
+                wins: "142"
+              }
+            ].map((team, index) => (
+              <div key={index} className={`relative bg-muted/30 backdrop-blur-sm rounded-2xl p-6 border-2 ${team.borderColor} hover:bg-muted/50 transition-all duration-300 transform hover:scale-105 group`}>
+                {/* Team Color Badge */}
+                <div className={`absolute -top-3 -right-3 w-12 h-12 ${team.bgColor} rounded-full flex items-center justify-center shadow-lg`}>
+                  <div className="w-6 h-6 bg-white rounded-full"></div>
+                </div>
+                
+                {/* Team Icon */}
+                <div className={`text-6xl mb-4 ${team.textColor} transform group-hover:scale-110 transition-transform duration-300`}>
+                  {team.color === 'red' && '🔥'}
+                  {team.color === 'yellow' && '⚡'}
+                  {team.color === 'green' && '🌿'}
+                  {team.color === 'blue' && '🌊'}
+                </div>
+                
+                <h3 className={`text-2xl font-bold ${team.textColor} mb-2`}>{team.name}</h3>
+                <p className="text-sm text-muted-foreground mb-4 font-medium">{team.motto}</p>
+                
+                {/* Team Stats */}
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Members:</span>
+                    <span className="font-bold text-foreground">{team.members}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Wins:</span>
+                    <span className="font-bold text-foreground">{team.wins}</span>
+                  </div>
+                </div>
+                
+                <Button className={`w-full rounded-full ${team.bgColor} hover:${team.bgColor}/90 text-white border-0`}>
+                  Join Team
+                </Button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground mb-6">
+              Can't decide? Don't worry - you can switch teams anytime before major tournaments!
+            </p>
+            <Button variant="outline" size="lg" className="rounded-full">
+              View Team Rankings
+            </Button>
           </div>
         </div>
       </section>
@@ -332,7 +447,11 @@ export default function HomePage() {
                 placeholder="Enter your email" 
                 className="flex-1 px-6 py-3 rounded-full border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
-              <Button size="lg" className="rounded-full px-8">
+              <Button 
+                size="lg" 
+                className="rounded-full px-8"
+                onClick={() => alert('Thanks for subscribing! We\'ll keep you updated on all our events.')}
+              >
                 Subscribe
               </Button>
             </div>
@@ -350,10 +469,19 @@ export default function HomePage() {
             Connect with like-minded young people, create lasting memories, and be part of Ghana's most vibrant gaming community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90">
+            <Button 
+              size="lg" 
+              className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90"
+              onClick={() => window.open('/events', '_self')}
+            >
               Get your tickets now
             </Button>
-            <Button variant="outline" size="lg" className="rounded-full text-base px-8 py-6">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="rounded-full text-base px-8 py-6"
+              onClick={() => window.open('/community', '_self')}
+            >
               Join WhatsApp Group
             </Button>
           </div>

@@ -287,7 +287,11 @@ export default function Gallery() {
             <p className="text-xl text-muted-foreground mb-6">
               Want to be featured in our next gallery? Join an upcoming event!
             </p>
-            <Button variant="hero" size="lg">
+            <Button 
+              variant="hero" 
+              size="lg"
+              onClick={() => window.open('/events', '_self')}
+            >
               Browse Upcoming Events
             </Button>
           </div>

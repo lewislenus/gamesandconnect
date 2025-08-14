@@ -114,7 +114,12 @@ export default function Trivia() {
             </div>
           </div>
 
-          <Button variant="hero" size="lg" className="bg-white text-gaming hover:bg-white/90 text-lg px-8 py-4 shadow-2xl">
+          <Button 
+            variant="hero" 
+            size="lg" 
+            className="bg-white text-gaming hover:bg-white/90 text-lg px-8 py-4 shadow-2xl"
+            onClick={() => window.open('https://chat.whatsapp.com/trivia-link', '_blank')}
+          >
             Join This Friday's Trivia
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
@@ -305,11 +310,21 @@ export default function Trivia() {
             Join our WhatsApp trivia group to get notified about this week's session and compete for amazing prizes!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg" className="bg-white text-gaming hover:bg-white/90">
+            <Button 
+              variant="hero" 
+              size="lg" 
+              className="bg-white text-gaming hover:bg-white/90"
+              onClick={() => window.open('https://chat.whatsapp.com/trivia-link', '_blank')}
+            >
               Join Trivia WhatsApp Group
               <Brain className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="border-white text-white hover:bg-white/10"
+              onClick={() => alert('Past questions archive coming soon!')}
+            >
               View Past Questions
             </Button>
           </div>
