@@ -125,6 +125,221 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Featured Events */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black text-foreground mb-6">
+              Featured <span className="text-primary">Events</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Don't miss out on these epic gaming experiences coming your way!
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Gaming Tournament",
+                date: "June 8, 2025",
+                time: "3:00 PM",
+                location: "Accra Sports Stadium",
+                price: "GHS 50",
+                image: "🎮"
+              },
+              {
+                title: "Connect & Chill",
+                date: "June 15, 2025",
+                time: "6:00 PM",
+                location: "East Legon",
+                price: "Free",
+                image: "🎉"
+              },
+              {
+                title: "Trivia Night",
+                date: "June 22, 2025",
+                time: "8:00 PM",
+                location: "Online",
+                price: "GHS 20",
+                image: "🧠"
+              }
+            ].map((event, index) => (
+              <div key={index} className="bg-muted/30 backdrop-blur-sm rounded-2xl p-6 hover:bg-muted/50 transition-all duration-300 transform hover:scale-105">
+                <div className="text-4xl mb-4">{event.image}</div>
+                <h3 className="text-xl font-bold text-foreground mb-2">{event.title}</h3>
+                <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{event.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{event.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-primary">{event.price}</span>
+                  <Button size="sm" className="rounded-full">
+                    Register
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What We Offer */}
+      <section className="py-20 bg-muted/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black text-foreground mb-6">
+              What We <span className="text-primary">Offer</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              More than just gaming - we're building a complete lifestyle experience
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: "🎮",
+                title: "Gaming Tournaments",
+                description: "Competitive gaming events with amazing prizes and recognition"
+              },
+              {
+                icon: "🌍",
+                title: "Travel Experiences",
+                description: "Explore Ghana and beyond with fellow gaming enthusiasts"
+              },
+              {
+                icon: "🤝",
+                title: "Networking",
+                description: "Connect with like-minded people and build lasting friendships"
+              },
+              {
+                icon: "🏆",
+                title: "Skill Development",
+                description: "Improve your gaming skills and learn from the best players"
+              }
+            ].map((offer, index) => (
+              <div key={index} className="text-center group">
+                <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                  {offer.icon}
+                </div>
+                <h3 className="text-xl font-bold text-foreground mb-3">{offer.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{offer.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics */}
+      <section className="py-20 bg-foreground text-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black mb-6">
+              By The <span className="text-primary">Numbers</span>
+            </h2>
+            <p className="text-xl text-background/80 max-w-2xl mx-auto">
+              Our community continues to grow stronger every day
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { number: "2K+", label: "Active Members" },
+              { number: "50+", label: "Events Hosted" },
+              { number: "15", label: "Cities Reached" },
+              { number: "100%", label: "Fun Guaranteed" }
+            ].map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-5xl font-black text-primary mb-2">{stat.number}</div>
+                <div className="text-lg text-background/80">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black text-foreground mb-6">
+              What Our <span className="text-primary">Community Says</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Real stories from real gamers in our community
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Kwame A.",
+                role: "Regular Attendee",
+                quote: "Games & Connect gave me a community I never knew I needed. The events are always fun and well-organized!",
+                avatar: "👨🏿‍💻"
+              },
+              {
+                name: "Ama S.",
+                role: "Tournament Winner",
+                quote: "I've met some of my best friends through this community. The gaming tournaments are incredibly competitive and exciting!",
+                avatar: "👩🏿‍🎨"
+              },
+              {
+                name: "Fiifi M.",
+                role: "Volunteer",
+                quote: "Being part of the organizing team has been amazing. We're building something special for Ghana's gaming scene!",
+                avatar: "👨🏿‍🚀"
+              }
+            ].map((testimonial, index) => (
+              <div key={index} className="bg-muted/30 backdrop-blur-sm rounded-2xl p-6">
+                <div className="flex items-center mb-4">
+                  <div className="text-3xl mr-4">{testimonial.avatar}</div>
+                  <div>
+                    <div className="font-bold text-foreground">{testimonial.name}</div>
+                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                  </div>
+                </div>
+                <p className="text-muted-foreground leading-relaxed italic">"{testimonial.quote}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="py-20 bg-muted/20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="bg-background rounded-3xl p-12 shadow-lg">
+            <h2 className="text-4xl font-black text-foreground mb-4">
+              Stay In The <span className="text-primary">Loop</span>
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Get the latest updates on events, tournaments, and community news
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                className="flex-1 px-6 py-3 rounded-full border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <Button size="lg" className="rounded-full px-8">
+                Subscribe
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action */}
       <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
