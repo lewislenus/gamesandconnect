@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState } fro      category: "gaming",
+      participants: 32,
+      image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg",
+      description: "Epic FIFA and Mobile Legends finals with tech industry networking"eact';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Filter, Calendar, MapPin, Users } from 'lucide-react';
@@ -23,7 +26,7 @@ export default function Gallery() {
       location: "East Legon",
       category: "gaming",
       participants: 32,
-      image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg",
+      image: "�",
       description: "Epic FIFA and Mobile Legends finals with tech industry networking"
     },
     {
@@ -73,7 +76,7 @@ export default function Gallery() {
       location: "Laboma Beach",
       category: "social", 
       participants: 45,
-      image: "🏖️",
+      image: "�️",
       description: "Beach cleanup followed by community bonding and BBQ"
     },
     {

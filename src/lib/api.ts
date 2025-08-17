@@ -227,7 +227,7 @@ export const getEvents = async (): Promise<Event[]> => {
     // NOTE: Explicit column list to avoid RLS / hidden column surprises.
     const { data, error, status } = await supabase
       .from('events')
-      .select('*')
+      .select('id,title,description,long_description,date,time,category,location,spots,total_spots,price,image,status,created_at,updated_at,organizer,requirements,includes,agenda,flyer')
       .order('date', { ascending: true });
 
     console.log('Full events query response:', { status, error, rawLength: data?.length });
@@ -258,8 +258,8 @@ export const getEvents = async (): Promise<Event[]> => {
       agenda: Array.isArray(event.agenda) ? event.agenda as Array<{ time: string; activity: string }> : [],
       flyer: event.flyer ? event.flyer as { url?: string; downloadUrl?: string; alt?: string } : undefined,
       gallery: Array.isArray(event.gallery) ? event.gallery as string[] : [],
-      // Use the time field from the database
-      time: event.time || 'Time TBA',
+      // Map time_range to time if time field doesn't exist or use existing time
+      time: event.time || event.time_range || 'Time TBA',
       // Ensure all required fields have defaults
       long_description: event.long_description || event.description,
       created_at: event.created_at || new Date().toISOString(),
@@ -281,7 +281,7 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     console.log(`Fetching event ${id} from Supabase...`);
     const { data, error, status } = await supabase
       .from('events')
-      .select('*')
+      .select('id,title,description,long_description,date,time,category,location,spots,total_spots,price,image,status,created_at,updated_at,organizer,requirements,includes,agenda,flyer')
       .eq('id', id)
       .maybeSingle(); // prevents 406 / PGRST116 when zero rows
 
@@ -312,7 +312,7 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       agenda: Array.isArray(data.agenda) ? data.agenda as Array<{ time: string; activity: string }> : [],
       flyer: data.flyer ? data.flyer as { url?: string; downloadUrl?: string; alt?: string } : undefined,
       gallery: Array.isArray((data as any).gallery) ? (data as any).gallery as string[] : [],
-      time: data.time || 'Time TBA',
+      time: data.time || (data as any).time_range || 'Time TBA',
       long_description: data.long_description || data.description,
       created_at: data.created_at || new Date().toISOString(),
       updated_at: data.updated_at || data.created_at || new Date().toISOString(),
