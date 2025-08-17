@@ -1,4 +1,16 @@
-# Welcome to your Lovable project
+# Games and Connect
+
+## About
+
+**Games and Connect** is the ultimate gaming community platform for Ghana. Connect with fellow gamers, participate in exciting events, join trivia nights, and build lasting friendships in the gaming community.
+
+## Features
+
+- 🎮 **Gaming Events**: Join tournaments, LAN parties, and gaming meetups
+- 🧠 **Trivia Friday**: Weekly trivia sessions with prizes and fun challenges  
+- 👥 **Community**: Connect with like-minded gamers across Ghana
+- 📸 **Gallery**: Share and explore gaming moments and event photos
+- 🏆 **Competitions**: Participate in various gaming competitions and win prizes
 
 ## Project info
 

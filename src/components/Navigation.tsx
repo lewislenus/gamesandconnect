@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Calendar, Users, Image, Gamepad2 } from 'lucide-react';
+import { Menu, X, Home, Calendar, Users, Image, Gamepad2, Ticket } from 'lucide-react';
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,14 +18,18 @@ export const Navigation = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-background/95 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50">
+    <nav className="sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link 
             to="/" 
-            className="text-2xl font-black text-foreground hover:text-primary transition-colors duration-300"
+            className="flex items-center hover:opacity-80 transition-opacity duration-300"
           >
-            GAMES & CONNECT
+            <img 
+              src="https://res.cloudinary.com/drkjnrvtu/image/upload/v1755287885/gameskkc_ytwhpi.png"
+              alt="Games & Connect Logo"
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -43,9 +47,19 @@ export const Navigation = () => {
                 {item.name.toUpperCase()}
               </Link>
             ))}
-            <Button size="sm" className="ml-4 rounded-full">
-              Get tickets
-            </Button>
+            <div className="flex space-x-4">
+              <Link to="/my-registrations">
+                <Button variant="outline" size="sm" className="rounded-full">
+                  <Ticket className="mr-2 h-4 w-4" />
+                  My Adventures
+                </Button>
+              </Link>
+              <Link to="/events">
+                <Button size="sm" className="rounded-full">
+                  Join the Journey
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -62,7 +76,7 @@ export const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-background border-b border-border/50 shadow-lg">
+          <div className="md:hidden absolute top-16 left-0 right-0">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => (
                 <Link
@@ -79,9 +93,17 @@ export const Navigation = () => {
                 </Link>
               ))}
               <div className="px-3 py-2">
-                <Button className="w-full rounded-full">
-                  Get tickets
-                </Button>
+                <Link to="/my-registrations" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-full mb-2">
+                    <Ticket className="mr-2 h-4 w-4" />
+                    My Adventures
+                  </Button>
+                </Link>
+                <Link to="/events" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full rounded-full">
+                    Join the Journey
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

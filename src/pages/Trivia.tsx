@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Clock, Users, Brain, Star, ArrowRight, Calendar, Gift } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Trivia() {
   const [timeLeft, setTimeLeft] = useState({
@@ -77,65 +78,117 @@ export default function Trivia() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div 
+      className="min-h-screen bg-background"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-gaming via-primary to-accent py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="text-6xl mb-6">🧠⚡</div>
-          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+          <motion.div 
+            className="text-6xl mb-6"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 200 }}
+          >
+            🧠⚡
+          </motion.div>
+          <motion.h1 
+            className="text-4xl lg:text-6xl font-bold text-white mb-6"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
             Trivia Friday
-          </h1>
-          <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed">
+          </motion.h1>
+          <motion.p 
+            className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
             Test your knowledge, win amazing prizes, and have fun with fellow trivia enthusiasts every Friday at 7 PM!
-          </p>
+          </motion.p>
 
           {/* Countdown */}
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 mb-12 max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold text-white mb-6">Next Trivia Session In:</h3>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="bg-white/20 rounded-2xl p-4">
-                <div className="text-3xl font-bold text-white">{timeLeft.days}</div>
-                <div className="text-white/80 text-sm">Days</div>
-              </div>
-              <div className="bg-white/20 rounded-2xl p-4">
-                <div className="text-3xl font-bold text-white">{timeLeft.hours}</div>
-                <div className="text-white/80 text-sm">Hours</div>
-              </div>
-              <div className="bg-white/20 rounded-2xl p-4">
-                <div className="text-3xl font-bold text-white">{timeLeft.minutes}</div>
-                <div className="text-white/80 text-sm">Minutes</div>
-              </div>
-              <div className="bg-white/20 rounded-2xl p-4">
-                <div className="text-3xl font-bold text-white">{timeLeft.seconds}</div>
-                <div className="text-white/80 text-sm">Seconds</div>
-              </div>
-            </div>
-          </div>
-
-          <Button 
-            variant="hero" 
-            size="lg" 
-            className="bg-white text-gaming hover:bg-white/90 text-lg px-8 py-4 shadow-2xl"
-            onClick={() => window.open('https://chat.whatsapp.com/trivia-link', '_blank')}
+          <motion.div 
+            className="bg-white/10 backdrop-blur-md rounded-3xl p-8 mb-12 max-w-2xl mx-auto"
+            initial={{ y: 50, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.8, type: "spring", stiffness: 100 }}
           >
-            Join This Friday's Trivia
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+            <motion.h3 
+              className="text-2xl font-bold text-white mb-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.0 }}
+            >
+              Next Trivia Session In:
+            </motion.h3>
+            <div className="grid grid-cols-4 gap-4">
+              {[
+                { value: timeLeft.days, label: 'DAYS' },
+                { value: timeLeft.hours, label: 'HOURS' },
+                { value: timeLeft.minutes, label: 'MINUTES' },
+                { value: timeLeft.seconds, label: 'SECONDS' }
+              ].map((item, index) => (
+                <motion.div 
+                  key={item.label}
+                  className="bg-white/20 rounded-2xl p-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 1.2 + index * 0.1 }}
+                >
+                  <div className="text-3xl font-bold text-white">{item.value}</div>
+                  <div className="text-white/80 text-sm">{item.label}</div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.6 }}
+          >
+            <Button 
+              variant="hero" 
+              size="lg" 
+              className="bg-white text-gaming hover:bg-white/90 text-lg px-8 py-4 shadow-2xl"
+              onClick={() => window.open('https://chat.whatsapp.com/trivia-link', '_blank')}
+            >
+              Join This Friday's Trivia
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </motion.div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+          <motion.div 
+            className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1.8 }}
+          >
             {triviaStats.map((stat, index) => (
-              <div key={index} className="text-center">
+              <motion.div 
+                key={index} 
+                className="text-center"
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 2.0 + index * 0.1 }}
+              >
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-2 inline-block">
                   <stat.icon className="h-8 w-8 text-white mx-auto" />
                 </div>
                 <div className="text-3xl font-bold text-white">{stat.value}</div>
                 <div className="text-white/80">{stat.label}</div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -336,6 +389,6 @@ export default function Trivia() {
           </div>
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 }

@@ -21,16 +21,14 @@ export default function Events() {
       setLoading(true);
       try {
         const data = await getEvents();
-        console.log('Loaded events from database:', data);
         if (data && data.length > 0) {
           setEvents(data);
         } else {
-          console.log('No events found in database, using sample data');
+          // Fallback to sample data if the API returns empty
           setEvents(sampleEvents);
         }
       } catch (error) {
         console.error('Failed to load events:', error);
-        console.log('Error occurred, falling back to sample data');
         setEvents(sampleEvents);
       } finally {
         setLoading(false);
@@ -41,46 +39,6 @@ export default function Events() {
   }, []);
 
   // Filter events by search term only and sort by date
-  // Helper: robustly parse various date formats (ISO, 'June 15, 2025', 'September 14-15, 2025')
-  const parseEventDate = (raw: string): Date | null => {
-    if (!raw) return null;
-    const trimmed = raw.trim();
-    // ISO yyyy-mm-dd
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      const d = new Date(trimmed + 'T00:00:00');
-      return isNaN(d.getTime()) ? null : d;
-    }
-    // Range like 'September 14-15, 2025' or 'Sept 14-15, 2025'
-    const rangeMatch = /^(January|February|March|April|May|June|July|August|September|Sept|October|November|December)\s+(\d{1,2})-(\d{1,2}),\s*(\d{4})$/i.exec(trimmed);
-    if (rangeMatch) {
-      const [, month, startDay, _endDay, year] = rangeMatch;
-      const normalized = `${month} ${startDay}, ${year}`.replace('Sept ', 'Sep ');
-      const d = new Date(normalized);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    // Fallback: if string contains a hyphen that breaks Date parsing, take text before first hyphen
-    if (trimmed.includes('-')) {
-      const firstPart = trimmed.split('-')[0].trim().replace(/,$/, '');
-      const possibleYear = trimmed.match(/(\d{4})$/)?.[1];
-      if (possibleYear && !/\d{4}$/.test(firstPart)) {
-        const attempt = `${firstPart}, ${possibleYear}`;
-        const d = new Date(attempt);
-        if (!isNaN(d.getTime())) return d;
-      }
-    }
-    const direct = new Date(trimmed);
-    return isNaN(direct.getTime()) ? null : direct;
-  };
-
-  const getComparableDate = (e: Event): Date => {
-    const parsed = parseEventDate(e.date);
-    if (!parsed) {
-      console.warn('Unparsable event date, treating as past:', e.date, e.id);
-      return new Date(0); // Epoch => very old
-    }
-    return parsed;
-  };
-
   const filteredEvents = events
     .filter(event => {
       const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -88,8 +46,8 @@ export default function Events() {
       return matchesSearch;
     })
     .sort((a, b) => {
-      const dateA = getComparableDate(a);
-      const dateB = getComparableDate(b);
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
       const now = new Date();
       
       // Separate upcoming and past events
@@ -127,8 +85,8 @@ export default function Events() {
 
   // Separate events into upcoming and past
   const now = new Date();
-  const upcomingEvents = filteredEvents.filter(event => getComparableDate(event) >= now);
-  const pastEvents = filteredEvents.filter(event => getComparableDate(event) < now);
+  const upcomingEvents = filteredEvents.filter(event => new Date(event.date) >= now);
+  const pastEvents = filteredEvents.filter(event => new Date(event.date) < now);
 
   return (
     <motion.div 
@@ -177,19 +135,7 @@ export default function Events() {
 
           <div className="text-center text-muted-foreground">
             {!loading && (
-              <>
-                Showing {filteredEvents.length} adventures
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="mt-2 text-xs">
-                    <details>
-                      <summary>Debug Info</summary>
-                      <pre className="text-left mt-2 bg-muted p-2 rounded text-xs overflow-auto max-h-32">
-                        {JSON.stringify(events.map(e => ({ id: e.id, title: e.title, date: e.date })), null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                )}
-              </>
+              <>Showing {filteredEvents.length} adventures</>
             )}
           </div>
         </div>
@@ -273,7 +219,7 @@ export default function Events() {
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-4 w-4" />
-                                  <span>{(() => { const d = getComparableDate(event); return isNaN(d.getTime()) ? event.date : d.toLocaleDateString(); })()}</span>
+                                  <span>{new Date(event.date).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
@@ -390,7 +336,7 @@ export default function Events() {
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-4 w-4" />
-                                  <span>{(() => { const d = getComparableDate(event); return isNaN(d.getTime()) ? event.date : d.toLocaleDateString(); })()}</span>
+                                  <span>{new Date(event.date).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />

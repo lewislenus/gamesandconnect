@@ -1,20 +1,21 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState } fro      category: "gaming",
+      participants: 32,
+      image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg",
+      description: "Epic FIFA and Mobile Legends finals with tech industry networking"eact';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Filter, Calendar, MapPin, Users } from 'lucide-react';
-import { AutoCarousel, CLOUDINARY_IMAGES } from '@/components/ui/auto-carousel';
 
 export default function Gallery() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const categories = [
-    { value: 'all', label: 'All Adventures', count: 8 },
-    { value: 'gaming', label: 'Play', count: 2 },
-    { value: 'travel', label: 'Travel', count: 3 },
-    { value: 'social', label: 'Connect', count: 2 },
-    { value: 'trivia', label: 'Challenge', count: 1 }
+    { value: 'all', label: 'All Adventures', count: 24 },
+    { value: 'gaming', label: 'Play', count: 8 },
+    { value: 'travel', label: 'Travel', count: 10 },
+    { value: 'social', label: 'Connect', count: 4 },
+    { value: 'trivia', label: 'Challenge', count: 2 }
   ];
 
   const galleryItems = [
@@ -25,7 +26,7 @@ export default function Gallery() {
       location: "East Legon",
       category: "gaming",
       participants: 32,
-      image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg",
+      image: "�",
       description: "Epic FIFA and Mobile Legends finals with tech industry networking"
     },
     {
@@ -75,7 +76,7 @@ export default function Gallery() {
       location: "Laboma Beach",
       category: "social", 
       participants: 45,
-      image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1758_mj5kho.jpg",
+      image: "�️",
       description: "Beach cleanup followed by community bonding and BBQ"
     },
     {
@@ -123,31 +124,16 @@ export default function Gallery() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen bg-background"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary to-accent py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1 
-            className="text-4xl lg:text-5xl font-bold text-white mb-4"
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
             Adventure Gallery
-          </motion.h1>
-          <motion.p 
-            className="text-xl text-white/90 max-w-2xl mx-auto"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          </h1>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
             Relive the incredible moments from our play, travel, and connect adventures across Ghana!
-          </motion.p>
+          </p>
         </div>
       </section>
 
@@ -176,19 +162,84 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Auto-Scrolling Image Carousel */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Featured Adventure Moments</h2>
-          <div className="max-w-5xl mx-auto">
-            <AutoCarousel 
-              collection="all"
-              autoScrollInterval={4000}
-              className="h-96 rounded-2xl shadow-xl"
-              imageClassName="object-cover"
-              pauseOnHover={true}
-            />
+        {/* Featured Image Carousel */}
+        {filteredItems.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Featured Moments</h2>
+            <div className="relative max-w-4xl mx-auto">
+              <div className="bg-gradient-to-br from-muted/30 to-muted/10 rounded-3xl p-12 text-center shadow-xl">
+                <div className="w-full h-64 mb-6 rounded-2xl overflow-hidden">
+                  <img 
+                    src={filteredItems[currentImageIndex]?.image}
+                    alt={filteredItems[currentImageIndex]?.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <Badge className={`${getCategoryColor(filteredItems[currentImageIndex]?.category)} mb-4`}>
+                  {filteredItems[currentImageIndex]?.category.toUpperCase()}
+                </Badge>
+                <h3 className="text-3xl font-bold text-foreground mb-4">
+                  {filteredItems[currentImageIndex]?.title}
+                </h3>
+                <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
+                  {filteredItems[currentImageIndex]?.description}
+                </p>
+                
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{filteredItems[currentImageIndex]?.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{filteredItems[currentImageIndex]?.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span>{filteredItems[currentImageIndex]?.participants} participants</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Buttons */}
+              {filteredItems.length > 1 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full shadow-lg bg-background/90 backdrop-blur-sm"
+                    onClick={prevImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 rounded-full shadow-lg bg-background/90 backdrop-blur-sm"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+
+              {/* Dots Indicator */}
+              {filteredItems.length > 1 && (
+                <div className="flex justify-center mt-6 gap-2">
+                  {filteredItems.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        index === currentImageIndex ? 'bg-primary w-8' : 'bg-muted-foreground/30'
+                      }`}
+                      onClick={() => setCurrentImageIndex(index)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Gallery Grid */}
         <div className="mb-16">
@@ -271,6 +322,6 @@ export default function Gallery() {
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          id: string
+          user_id: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       events: {
         Row: {
           category: string
@@ -30,6 +62,13 @@ export type Database = {
           title: string
           total_spots: number
           updated_at: string
+          long_description: string | null
+          organizer: string | null
+          flyer: Json | null
+          requirements: Json | null
+          includes: Json | null
+          agenda: Json | null
+          rating: number | null
         }
         Insert: {
           category: string
@@ -46,6 +85,13 @@ export type Database = {
           title: string
           total_spots: number
           updated_at?: string
+          long_description?: string | null
+          organizer?: string | null
+          flyer?: Json | null
+          requirements?: Json | null
+          includes?: Json | null
+          agenda?: Json | null
+          rating?: number | null
         }
         Update: {
           category?: string
@@ -62,12 +108,343 @@ export type Database = {
           title?: string
           total_spots?: number
           updated_at?: string
+          long_description?: string | null
+          organizer?: string | null
+          flyer?: Json | null
+          requirements?: Json | null
+          includes?: Json | null
+          agenda?: Json | null
+          rating?: number | null
         }
         Relationships: []
       }
+      event_feedback: {
+        Row: {
+          id: string
+          event_id: string
+          user_id: string | null
+          registration_id: string
+          rating: number
+          feedback_text: string | null
+          created_at: string
+          updated_at: string
+          is_anonymous: boolean
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          user_id?: string | null
+          registration_id: string
+          rating: number
+          feedback_text?: string | null
+          created_at?: string
+          updated_at?: string
+          is_anonymous?: boolean
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          user_id?: string | null
+          registration_id?: string
+          rating?: number
+          feedback_text?: string | null
+          created_at?: string
+          updated_at?: string
+          is_anonymous?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_feedback_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      registrations: {
+        Row: {
+          id: string
+          event_id: string
+          user_id: string | null
+          name: string
+          email: string
+          phone: string
+          emergency_contact: string | null
+          dietary_requirements: string | null
+          additional_info: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          ticket_number: string | null
+          is_paid: boolean
+          amount_paid: number
+          payment_method: string | null
+          payment_reference: string | null
+          attended_at: string | null
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          user_id?: string | null
+          name: string
+          email: string
+          phone: string
+          emergency_contact?: string | null
+          dietary_requirements?: string | null
+          additional_info?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          ticket_number?: string | null
+          is_paid?: boolean
+          amount_paid?: number
+          payment_method?: string | null
+          payment_reference?: string | null
+          attended_at?: string | null
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          user_id?: string | null
+          name?: string
+          email?: string
+          phone?: string
+          emergency_contact?: string | null
+          dietary_requirements?: string | null
+          additional_info?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          ticket_number?: string | null
+          is_paid?: boolean
+          amount_paid?: number
+          payment_method?: string | null
+          payment_reference?: string | null
+          attended_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      registration_logs: {
+        Row: {
+          id: string
+          registration_id: string
+          event_id: string
+          user_id: string | null
+          action: string
+          old_status: string | null
+          new_status: string | null
+          created_at: string
+          admin_id: string | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          registration_id: string
+          event_id: string
+          user_id?: string | null
+          action: string
+          old_status?: string | null
+          new_status?: string | null
+          created_at?: string
+          admin_id?: string | null
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          registration_id?: string
+          event_id?: string
+          user_id?: string | null
+          action?: string
+          old_status?: string | null
+          new_status?: string | null
+          created_at?: string
+          admin_id?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_logs_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      ticket_templates: {
+        Row: {
+          id: string
+          event_id: string
+          template_name: string
+          template_html: string
+          created_at: string
+          updated_at: string
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          template_name: string
+          template_html: string
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          template_name?: string
+          template_html?: string
+          created_at?: string
+          updated_at?: string
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_templates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      waitlist: {
+        Row: {
+          id: string
+          event_id: string
+          user_id: string | null
+          name: string
+          email: string
+          phone: string
+          created_at: string
+          status: string
+          notified_at: string | null
+          notification_count: number | null
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          user_id?: string | null
+          name: string
+          email: string
+          phone: string
+          created_at?: string
+          status?: string
+          notified_at?: string | null
+          notification_count?: number | null
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          user_id?: string | null
+          name?: string
+          email?: string
+          phone?: string
+          created_at?: string
+          status?: string
+          notified_at?: string | null
+          notification_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      event_statistics: {
+        Row: {
+          event_id: string
+          title: string
+          date: string
+          category: string
+          total_spots: number
+          available_spots: number
+          registered_count: number
+          fill_percentage: number
+          confirmed_count: number
+          pending_count: number
+          cancelled_count: number
+          attended_count: number
+          waitlist_count: number
+          average_rating: number
+          feedback_count: number
+          event_status: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_statistics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
