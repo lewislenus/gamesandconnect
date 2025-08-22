@@ -35,8 +35,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
 
   // Check if user is admin
-  const checkAdminStatus = async (): Promise<boolean> => {
-    if (!user?.email) {
+  const checkAdminStatus = async (emailParam?: string): Promise<boolean> => {
+    const emailToCheck = emailParam ?? user?.email;
+    if (!emailToCheck) {
       console.log('❌ No user or email found');
       return false;
     }
@@ -51,10 +52,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         'gamesandconnectgh@gmail.com'
       ];
       
-      console.log('🔍 Checking admin status for:', user.email);
+      console.log('🔍 Checking admin status for:', emailToCheck);
       console.log('📋 Admin emails list:', adminEmails);
       
-      const adminStatus = adminEmails.includes(user.email.toLowerCase());
+      const adminStatus = adminEmails.includes(emailToCheck.toLowerCase());
       console.log('✅ Admin status result:', adminStatus);
       
       setIsAdmin(adminStatus);
@@ -84,9 +85,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(data.user);
         setSession(data.session);
         
-        // Check admin status
+        // Check admin status (pass email directly to avoid state timing issues)
         console.log('🔍 Checking admin status...');
-        const adminStatus = await checkAdminStatus();
+        const adminStatus = await checkAdminStatus(data.user.email ?? undefined);
         console.log('📊 Admin check result:', adminStatus);
         
         if (!adminStatus) {
@@ -154,7 +155,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (session?.user) {
           setSession(session);
           setUser(session.user);
-          await checkAdminStatus();
+          await checkAdminStatus(session.user.email ?? undefined);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -174,7 +175,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setSession(session);
           setUser(session.user);
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            await checkAdminStatus();
+            await checkAdminStatus(session.user.email ?? undefined);
           }
         } else {
           setSession(null);

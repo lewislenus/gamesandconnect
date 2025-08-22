@@ -224,10 +224,9 @@ export const apiConfig = {
 export const getEvents = async (): Promise<Event[]> => {
   try {
     console.log('Fetching events from Supabase...');
-    // NOTE: Explicit column list to avoid RLS / hidden column surprises.
     const { data, error, status } = await supabase
       .from('events')
-      .select('id,title,description,long_description,date,time,category,location,spots,total_spots,price,image,status,created_at,updated_at,organizer,requirements,includes,agenda,flyer')
+      .select('*')
       .order('date', { ascending: true });
 
     console.log('Full events query response:', { status, error, rawLength: data?.length });
@@ -249,23 +248,32 @@ export const getEvents = async (): Promise<Event[]> => {
 
     console.log(`Found ${data.length} events in database`);
 
-    // Transform database data to match Event interface
-    const transformedData = data.map((event: any) => ({
-      ...event,
-      id: event.id.toString(), // Ensure ID is string
-      requirements: Array.isArray(event.requirements) ? event.requirements as string[] : [],
-      includes: Array.isArray(event.includes) ? event.includes as string[] : [],
-      agenda: Array.isArray(event.agenda) ? event.agenda as Array<{ time: string; activity: string }> : [],
-      flyer: event.flyer ? event.flyer as { url?: string; downloadUrl?: string; alt?: string } : undefined,
-      gallery: Array.isArray(event.gallery) ? event.gallery as string[] : [],
-      // Map time_range to time if time field doesn't exist or use existing time
-      time: event.time || event.time_range || 'Time TBA',
-      // Ensure all required fields have defaults
-      long_description: event.long_description || event.description,
-      created_at: event.created_at || new Date().toISOString(),
-      updated_at: event.updated_at || event.created_at || new Date().toISOString(),
-      organizer: event.organizer || 'Games & Connect Team'
-    }));
+    // Transform database data to match Event interface using provided schema
+    const transformedData = data.map((row: any) => {
+      const info = (row.additional_info || {}) as { long_description?: string; organizer?: string; status?: string };
+      return {
+        ...row,
+        id: row.id?.toString?.() ?? String(row.id),
+        // Map DB columns to UI fields
+        time: row.time_range || 'Time TBA',
+        image: row.image_url || '',
+        total_spots: typeof row.capacity === 'number' ? row.capacity : 0,
+        spots: typeof row.capacity === 'number' ? row.capacity : 0,
+        // Additional info JSON
+        long_description: info.long_description || row.description,
+        organizer: info.organizer || 'Games & Connect Team',
+        status: info.status || row.status || 'open',
+        // Ensure arrays
+        requirements: Array.isArray(row.requirements) ? (row.requirements as string[]) : [],
+        includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
+        agenda: Array.isArray(row.agenda) ? (row.agenda as Array<{ time: string; activity: string }>) : [],
+        flyer: row.flyer ? (row.flyer as { url?: string; downloadUrl?: string; alt?: string }) : undefined,
+        gallery: Array.isArray(row.gallery) ? (row.gallery as string[]) : [],
+        // Timestamps fallback
+        created_at: row.created_at || new Date().toISOString(),
+        updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+      } as Event;
+    });
 
     console.log('Transformed events:', transformedData);
     return transformedData;
@@ -281,7 +289,7 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     console.log(`Fetching event ${id} from Supabase...`);
     const { data, error, status } = await supabase
       .from('events')
-      .select('id,title,description,long_description,date,time,category,location,spots,total_spots,price,image,status,created_at,updated_at,organizer,requirements,includes,agenda,flyer')
+      .select('*')
       .eq('id', id)
       .maybeSingle(); // prevents 406 / PGRST116 when zero rows
 
@@ -301,22 +309,27 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       return sampleEvents.find(event => event.id === id) || null;
     }
 
-    console.log(`Found event in database:`, data);
+    const row: any = data;
+    const info = (row.additional_info || {}) as { long_description?: string; organizer?: string; status?: string };
 
     // Transform database data to match Event interface
     const transformedEvent = {
-      ...data,
-      id: data.id.toString(),
-      requirements: Array.isArray(data.requirements) ? data.requirements as string[] : [],
-      includes: Array.isArray(data.includes) ? data.includes as string[] : [],
-      agenda: Array.isArray(data.agenda) ? data.agenda as Array<{ time: string; activity: string }> : [],
-      flyer: data.flyer ? data.flyer as { url?: string; downloadUrl?: string; alt?: string } : undefined,
-      gallery: Array.isArray((data as any).gallery) ? (data as any).gallery as string[] : [],
-      time: data.time || (data as any).time_range || 'Time TBA',
-      long_description: data.long_description || data.description,
-      created_at: data.created_at || new Date().toISOString(),
-      updated_at: data.updated_at || data.created_at || new Date().toISOString(),
-      organizer: data.organizer || 'Games & Connect Team'
+      ...row,
+      id: row.id?.toString?.() ?? String(row.id),
+      time: row.time_range || 'Time TBA',
+      image: row.image_url || '',
+      total_spots: typeof row.capacity === 'number' ? row.capacity : 0,
+      spots: typeof row.capacity === 'number' ? row.capacity : 0,
+      long_description: info.long_description || row.description,
+      organizer: info.organizer || 'Games & Connect Team',
+      status: info.status || row.status || 'open',
+      requirements: Array.isArray(row.requirements) ? (row.requirements as string[]) : [],
+      includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
+      agenda: Array.isArray(row.agenda) ? (row.agenda as Array<{ time: string; activity: string }>) : [],
+      flyer: row.flyer ? (row.flyer as { url?: string; downloadUrl?: string; alt?: string }) : undefined,
+      gallery: Array.isArray((row as any).gallery) ? ((row as any).gallery as string[]) : [],
+      created_at: row.created_at || new Date().toISOString(),
+      updated_at: row.updated_at || row.created_at || new Date().toISOString(),
     };
 
     console.log('Transformed event:', transformedEvent);
@@ -329,18 +342,18 @@ export const getEventById = async (id: string): Promise<Event | null> => {
 
 export const registerForEvent = async (eventId: string, userData: any) => {
   try {
-    // First, check if the event has available spots
+    // Basic registration without spots tracking since schema has no spots/total_spots
     const { data: eventData, error: eventError } = await supabase
       .from('events')
-      .select('spots, total_spots')
+      .select('id, capacity')
       .eq('id', eventId)
       .single();
 
-    if (eventError) {
+    if (eventError || !eventData) {
       return { success: false, error: 'Event not found', isWaitlist: false };
     }
 
-    const isWaitlist = eventData.spots <= 0;
+    const isWaitlist = false;
 
     const { data, error } = await supabase
       .from('registrations')
@@ -361,20 +374,7 @@ export const registerForEvent = async (eventId: string, userData: any) => {
       return { success: false, error: error.message, isWaitlist: false };
     }
 
-    // If not waitlist, update the event spots count
-    if (!isWaitlist) {
-      const { error: updateError } = await supabase
-        .from('events')
-        .update({ 
-          spots: eventData.spots - 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', eventId);
-
-      if (updateError) {
-        console.error('Error updating event spots:', updateError);
-      }
-    }
+    // Schema does not support decrementing available spots; consider deriving availability from registrations count instead
 
     return { success: true, data, isWaitlist };
   } catch (error) {

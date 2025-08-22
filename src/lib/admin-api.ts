@@ -62,10 +62,16 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from('events')
       .select('*', { count: 'exact', head: true });
 
-    // Get total registrations
-    const { count: totalRegistrations } = await supabase
-      .from('registrations')
-      .select('*', { count: 'exact', head: true });
+    // Get total registrations (guard if table missing)
+    let totalRegistrations = 0;
+    try {
+      const { count } = await supabase
+        .from('registrations')
+        .select('*', { count: 'exact', head: true });
+      totalRegistrations = count || 0;
+    } catch (_) {
+      totalRegistrations = 0;
+    }
 
     // Get active events (events in the future)
     const { count: activeEvents } = await supabase
@@ -79,44 +85,61 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .select('*', { count: 'exact', head: true })
       .lt('date', new Date().toISOString().split('T')[0]);
 
-    // Get pending registrations
-    const { count: pendingRegistrations } = await supabase
-      .from('registrations')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending');
-
-    // Calculate total revenue
-    const { data: events } = await supabase
-      .from('events')
-      .select('price, total_spots, spots');
-
-    let totalRevenue = 0;
-    if (events) {
-      events.forEach(event => {
-        const priceNum = parseFloat(event.price?.replace(/[^\d.]/g, '') || '0');
-        const soldSpots = (event.total_spots || 0) - (event.spots || 0);
-        totalRevenue += priceNum * soldSpots;
-      });
+    // Get pending registrations (guard if table missing)
+    let pendingRegistrations = 0;
+    try {
+      const { count } = await supabase
+        .from('registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      pendingRegistrations = count || 0;
+    } catch (_) {
+      pendingRegistrations = 0;
     }
 
-    // Get average rating
-    const { data: feedback } = await supabase
-      .from('event_feedback')
-      .select('rating');
+    // Calculate total revenue using spots/total_spots from events
+    let totalRevenue = 0;
+    try {
+      const { data: eventsForRevenue } = await supabase
+        .from('events')
+        .select('price, total_spots, spots');
+      if (eventsForRevenue) {
+        for (const e of eventsForRevenue as any[]) {
+          const priceNum = parseFloat((e.price as string)?.replace(/[^\d.]/g, '') || '0');
+          const sold = Math.max(0, (e.total_spots || 0) - (e.spots || 0));
+          totalRevenue += priceNum * sold;
+        }
+      }
+    } catch (_) {
+      totalRevenue = 0;
+    }
 
+    // Get average rating (if feedback table exists)
     let averageRating = 0;
-    if (feedback && feedback.length > 0) {
-      const totalRating = feedback.reduce((sum, f) => sum + (f.rating || 0), 0);
-      averageRating = totalRating / feedback.length;
+    try {
+      const { data: feedback } = await supabase
+        .from('event_feedback')
+        .select('rating');
+      if (feedback && feedback.length > 0) {
+        const totalRating = feedback.reduce((sum, f) => sum + (f.rating || 0), 0);
+        averageRating = totalRating / feedback.length;
+      }
+    } catch (e) {
+      // ignore if table doesn't exist
+      averageRating = 0;
     }
 
     // For total users, we'll need to query auth.users or use a proxy table
     // Since we can't directly access auth.users, we'll estimate from registrations
-    const { data: uniqueUsers } = await supabase
-      .from('registrations')
-      .select('user_id');
-
-    const totalUsers = uniqueUsers ? new Set(uniqueUsers.map(u => u.user_id)).size : 0;
+    let totalUsers = 0;
+    try {
+      const { data: uniqueUsers } = await supabase
+        .from('registrations')
+        .select('user_id');
+      totalUsers = uniqueUsers ? new Set(uniqueUsers.map(u => u.user_id)).size : 0;
+    } catch (e) {
+      totalUsers = 0;
+    }
 
     return {
       totalEvents: totalEvents || 0,
@@ -214,42 +237,40 @@ export async function getTopEvents(): Promise<TopEvent[]> {
   try {
     const { data: events } = await supabase
       .from('events')
-      .select(`
-        id,
-        title,
-        total_spots,
-        spots,
-        price
-      `);
+      .select('id, title, total_spots, spots, price');
 
     if (!events) return [];
 
-    // Calculate registrations and revenue for each event
-    const topEvents: TopEvent[] = events.map(event => {
-      const registrations = (event.total_spots || 0) - (event.spots || 0);
-      const priceNum = parseFloat(event.price?.replace(/[^\d.]/g, '') || '0');
+    // Calculate registrations and revenue per event using total_spots/spots
+    const topEvents: TopEvent[] = (events as any[]).map((event) => {
+      const capacity = Number(event.total_spots) || 0;
+      const registrations = Math.max(0, (event.total_spots || 0) - (event.spots || 0));
+      const priceNum = parseFloat((event.price as string)?.replace(/[^\d.]/g, '') || '0');
       const revenue = priceNum * registrations;
 
       return {
-        id: event.id,
+        id: String(event.id),
         title: event.title,
         registrations,
-        capacity: event.total_spots || 0,
+        capacity,
         revenue,
-        rating: null // We'll need to calculate this from feedback
+        rating: null
       };
     });
 
     // Get ratings for each event
     for (const event of topEvents) {
-      const { data: feedback } = await supabase
-        .from('event_feedback')
-        .select('rating')
-        .eq('event_id', event.id);
-
-      if (feedback && feedback.length > 0) {
-        const avgRating = feedback.reduce((sum, f) => sum + (f.rating || 0), 0) / feedback.length;
-        event.rating = avgRating;
+      try {
+        const { data: feedback } = await supabase
+          .from('event_feedback')
+          .select('rating')
+          .eq('event_id', event.id);
+        if (feedback && feedback.length > 0) {
+          const avgRating = feedback.reduce((sum, f: any) => sum + (f.rating || 0), 0) / feedback.length;
+          event.rating = avgRating;
+        }
+      } catch (_) {
+        // ignore if table missing
       }
     }
 
@@ -368,11 +389,15 @@ export async function updateRegistrationStatus(
 // Delete Event
 export async function deleteEvent(eventId: string) {
   try {
-    // First delete related registrations
-    await supabase
-      .from('registrations')
-      .delete()
-      .eq('event_id', eventId);
+    // First delete related registrations (if table exists)
+    try {
+      await supabase
+        .from('registrations')
+        .delete()
+        .eq('event_id', eventId);
+    } catch (_) {
+      // ignore if table doesn't exist
+    }
 
     // Then delete the event
     const { error } = await supabase
@@ -438,22 +463,34 @@ export async function getEventAnalytics(eventId: string) {
     if (!event) return null;
 
     // Get registrations
-    const { data: registrations } = await supabase
-      .from('registrations')
-      .select('*')
-      .eq('event_id', eventId);
+    let registrations: any[] | null = null;
+    try {
+      const { data } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('event_id', eventId);
+      registrations = data || [];
+    } catch (_) {
+      registrations = [];
+    }
 
     // Get feedback
-    const { data: feedback } = await supabase
-      .from('event_feedback')
-      .select('*')
-      .eq('event_id', eventId);
+    let feedback: any[] | null = null;
+    try {
+      const { data } = await supabase
+        .from('event_feedback')
+        .select('*')
+        .eq('event_id', eventId);
+      feedback = data || [];
+    } catch (_) {
+      feedback = [];
+    }
 
     // Calculate analytics
-    const totalRegistrations = registrations?.length || 0;
-    const confirmedRegistrations = registrations?.filter(r => r.status === 'confirmed').length || 0;
-    const pendingRegistrations = registrations?.filter(r => r.status === 'pending').length || 0;
-    const cancelledRegistrations = registrations?.filter(r => r.status === 'cancelled').length || 0;
+    const totalRegistrations = registrations.length || 0;
+    const confirmedRegistrations = registrations.filter(r => r.status === 'confirmed').length || 0;
+    const pendingRegistrations = registrations.filter(r => r.status === 'pending').length || 0;
+    const cancelledRegistrations = registrations.filter(r => r.status === 'cancelled').length || 0;
 
     const averageRating = feedback && feedback.length > 0 
       ? feedback.reduce((sum, f) => sum + (f.rating || 0), 0) / feedback.length 

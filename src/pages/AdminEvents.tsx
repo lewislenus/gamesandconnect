@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,15 +14,14 @@ interface EventForm {
   title: string;
   description: string;
   long_description: string;
-  date: string;
-  time: string;
+  date: string; // display string; raw yyyy-mm-dd kept separately
+  time_range: string;
   location: string;
-  category: 'trivia' | 'gaming' | 'travel' | 'social';
-  spots: number;
-  total_spots: number;
+  category: 'trivia' | 'gaming' | 'travel' | 'social' | '';
+  capacity: number;
   price: string;
-  image: string;
-  status: 'open' | 'filling-fast' | 'almost-full' | 'full';
+  image_url: string; // emoji or url fallback
+  status: 'open' | 'filling-fast' | 'almost-full' | 'full' | '';
   organizer: string;
   requirements: string[];
   includes: string[];
@@ -34,13 +33,12 @@ const initialForm: EventForm = {
   description: '',
   long_description: '',
   date: '',
-  time: '',
+  time_range: '',
   location: '',
   category: 'social',
-  spots: 0,
-  total_spots: 0,
+  capacity: 0,
   price: '',
-  image: '🎮',
+  image_url: '🎮',
   status: 'open',
   organizer: '',
   requirements: [''],
@@ -48,15 +46,106 @@ const initialForm: EventForm = {
   agenda: [{ time: '', activity: '' }]
 };
 
+// Type aligned with Supabase events schema
+interface AdminEventRow {
+  id: number | string;
+  title: string;
+  date: string; // yyyy-mm-dd
+  time_range: string;
+  location: string;
+  description: string;
+  image_url?: string | null;
+  price?: string | null;
+  capacity: number;
+  created_at?: string | null;
+  additional_info?: { long_description?: string; organizer?: string; status?: string } | null;
+  gallery?: any;
+  agenda?: Array<{ time: string; activity: string }> | null;
+  requirements?: string[] | null;
+  includes?: string[] | null;
+  category?: string | null;
+}
+
 export default function AdminEvents() {
   const [form, setForm] = useState<EventForm>(initialForm);
   const [loading, setLoading] = useState(false);
+  const [flyerFile, setFlyerFile] = useState<File | null>(null);
+  const [flyerPreview, setFlyerPreview] = useState<string | null>(null);
+  const [uploadingFlyer, setUploadingFlyer] = useState(false);
+  const [dateRaw, setDateRaw] = useState<string>('');
   const { toast } = useToast();
+
+  // Events list state
+  const [events, setEvents] = useState<AdminEventRow[]>([]);
+  const [listLoading, setListLoading] = useState<boolean>(false);
+
+  const fetchEvents = async () => {
+    try {
+      setListLoading(true);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
+      if (error) throw error;
+      const normalized: AdminEventRow[] = (data || []).map((ev: any) => ({
+        id: ev.id,
+        title: ev.title,
+        date: ev.date,
+        time_range: ev.time_range,
+        location: ev.location,
+        description: ev.description,
+        image_url: ev.image_url ?? null,
+        price: ev.price ?? null,
+        capacity: ev.capacity,
+        created_at: ev.created_at ?? null,
+        additional_info: ev.additional_info ?? null,
+        gallery: ev.gallery ?? null,
+        agenda: Array.isArray(ev.agenda) ? ev.agenda : null,
+        requirements: Array.isArray(ev.requirements) ? ev.requirements : null,
+        includes: Array.isArray(ev.includes) ? ev.includes : null,
+        category: ev.category ?? null,
+      }));
+      setEvents(normalized);
+    } catch (err: any) {
+      console.error('[Supabase fetch events error]', err);
+      toast({
+        title: 'Failed to load events',
+        description: err?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const updateArrayField = (field: 'requirements' | 'includes', index: number, value: string) => {
     const newArray = [...form[field]];
     newArray[index] = value;
     setForm({ ...form, [field]: newArray });
+  };
+
+  const handleDelete = async (id: number | string) => {
+    try {
+      const confirmed = window.confirm('Delete this event? This cannot be undone.');
+      if (!confirmed) return;
+      // Normalize bigint id which may arrive as string from UI
+      const eventId = typeof id === 'string' ? Number(id) : id;
+      if (typeof eventId === 'number' && Number.isNaN(eventId)) {
+        throw new Error('Invalid event id');
+      }
+      // Supabase types for this project expect a string for id comparison
+      const { error } = await supabase.from('events').delete().eq('id', String(eventId));
+      if (error) throw error;
+      toast({ title: 'Deleted', description: 'Event removed.' });
+      fetchEvents();
+    } catch (err: any) {
+      console.error('[Supabase delete error]', err);
+      toast({ title: 'Error', description: err?.message || 'Failed to delete event', variant: 'destructive' });
+    }
   };
 
   const addArrayItem = (field: 'requirements' | 'includes') => {
@@ -70,7 +159,7 @@ export default function AdminEvents() {
 
   const updateAgenda = (index: number, field: 'time' | 'activity', value: string) => {
     const newAgenda = [...form.agenda];
-    newAgenda[index] = { ...newAgenda[index], [field]: value };
+    newAgenda[index] = { ...newAgenda[index], [field]: value } as any;
     setForm({ ...form, agenda: newAgenda });
   };
 
@@ -83,61 +172,124 @@ export default function AdminEvents() {
     setForm({ ...form, agenda: newAgenda });
   };
 
+  const handleFlyerChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFlyerFile(file);
+    setFlyerPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const uploadFlyerToCloudinary = async (file: File): Promise<{ url: string; public_id: string } | null> => {
+    try {
+      setUploadingFlyer(true);
+      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
+      const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
+      const folder = (import.meta.env.VITE_CLOUDINARY_FOLDER as string) || 'flyers';
+
+      if (!cloudName || !uploadPreset) {
+        throw new Error('Cloudinary is not configured. Please set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('folder', folder);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Cloudinary upload failed: ${errText}`);
+      }
+
+      const data = await res.json();
+      return { url: data.secure_url as string, public_id: data.public_id as string };
+    } catch (err: any) {
+      console.error('Error uploading to Cloudinary:', err);
+      toast({
+        title: 'Flyer Upload Failed',
+        description: err.message || 'Could not upload flyer image. Please try again.',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setUploadingFlyer(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Basic validation for required DB columns
+      if (!dateRaw) throw new Error('Please select a valid date.');
+      if (!form.time_range?.trim()) throw new Error('Please provide a time range.');
+      if (!form.location?.trim()) throw new Error('Please provide a location.');
+      if (!form.title?.trim() || !form.description?.trim()) throw new Error('Title and Description are required.');
+      if (!Number.isFinite(form.capacity) || form.capacity <= 0) throw new Error('Capacity must be a positive number.');
+
+      // Upload flyer if provided
+      let flyerUrl: string | null = null;
+      if (flyerFile) {
+        const uploaded = await uploadFlyerToCloudinary(flyerFile);
+        if (!uploaded) throw new Error('Flyer upload failed');
+        flyerUrl = uploaded.url;
+      }
+
       // Clean up empty items
       const cleanRequirements = form.requirements.filter(req => req.trim() !== '');
       const cleanIncludes = form.includes.filter(inc => inc.trim() !== '');
       const cleanAgenda = form.agenda.filter(item => item.time.trim() !== '' && item.activity.trim() !== '');
 
+      // Build payload matching DB columns
       const eventData = {
         title: form.title,
         description: form.description,
-        long_description: form.long_description,
-        date: form.date,
-        time: form.time,
+        date: dateRaw, // yyyy-mm-dd for date column
+        time_range: form.time_range,
         location: form.location,
-        category: form.category,
-        spots: form.spots,
-        total_spots: form.total_spots,
-        price: form.price,
-        image: form.image,
-        status: form.status,
-        organizer: form.organizer,
-        requirements: JSON.stringify(cleanRequirements),
-        includes: JSON.stringify(cleanIncludes),
-        agenda: JSON.stringify(cleanAgenda),
-        flyer: JSON.stringify({
-          url: `https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/${form.title.toLowerCase().replace(/\s+/g, '-')}`,
-          downloadUrl: `/downloads/${form.title.toLowerCase().replace(/\s+/g, '-')}-flyer.pdf`,
-          alt: `${form.title} Event Flyer`
-        })
+        category: form.category || null,
+        capacity: form.capacity,
+        price: form.price || null,
+        image_url: flyerUrl || form.image_url || null,
+        requirements: cleanRequirements,
+        includes: cleanIncludes,
+        agenda: cleanAgenda,
+        additional_info: {
+          long_description: form.long_description,
+          organizer: form.organizer,
+          status: form.status,
+        },
+        // gallery can be added later if you wire a multi-image uploader
       };
 
       const { error } = await supabase
         .from('events')
-        .insert([eventData]);
+        .insert([eventData as any]);
 
       if (error) {
+        console.error('[Supabase insert error]', error);
         throw error;
       }
 
-      toast({
-        title: "Success!",
-        description: "Event added successfully.",
-      });
+      toast({ title: 'Success!', description: 'Event added successfully.' });
 
       // Reset form
       setForm(initialForm);
+      setFlyerFile(null);
+      setFlyerPreview(null);
+      setDateRaw('');
+      // Refresh list
+      fetchEvents();
     } catch (error: any) {
       console.error('Error adding event:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to add event. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: error?.message || error?.hint || error?.details || 'Failed to add event. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -208,18 +360,31 @@ export default function AdminEvents() {
                   <Label htmlFor="date">Date</Label>
                   <Input
                     id="date"
-                    value={form.date}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })}
-                    placeholder="December 15, 2024"
+                    type="date"
+                    value={dateRaw}
+                    onChange={(e) => {
+                      const raw = e.target.value; // yyyy-mm-dd
+                      setDateRaw(raw);
+                      if (raw) {
+                        const formatted = new Date(raw + 'T00:00:00').toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        });
+                        setForm({ ...form, date: formatted });
+                      } else {
+                        setForm({ ...form, date: '' });
+                      }
+                    }}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="time">Time</Label>
+                  <Label htmlFor="time">Time Range</Label>
                   <Input
                     id="time"
-                    value={form.time}
-                    onChange={(e) => setForm({ ...form, time: e.target.value })}
+                    value={form.time_range}
+                    onChange={(e) => setForm({ ...form, time_range: e.target.value })}
                     placeholder="7:00 PM - 11:00 PM"
                     required
                   />
@@ -279,35 +444,29 @@ export default function AdminEvents() {
                   <Label htmlFor="image">Emoji</Label>
                   <Input
                     id="image"
-                    value={form.image}
-                    onChange={(e) => setForm({ ...form, image: e.target.value })}
+                    value={form.image_url}
+                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                     placeholder="🎮"
                     required
                   />
                 </div>
               </div>
 
-              {/* Spots */}
+              {/* Capacity */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="total_spots">Total Spots</Label>
+                  <Label htmlFor="capacity">Capacity</Label>
                   <Input
-                    id="total_spots"
+                    id="capacity"
                     type="number"
-                    value={form.total_spots}
-                    onChange={(e) => setForm({ ...form, total_spots: parseInt(e.target.value) || 0 })}
+                    value={form.capacity}
+                    onChange={(e) => setForm({ ...form, capacity: parseInt(e.target.value) || 0 })}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="spots">Available Spots</Label>
-                  <Input
-                    id="spots"
-                    type="number"
-                    value={form.spots}
-                    onChange={(e) => setForm({ ...form, spots: parseInt(e.target.value) || 0 })}
-                    required
-                  />
+                  <Label htmlFor="spots">Available Spots (deprecated)</Label>
+                  <Input id="spots" type="number" value={0} disabled />
                 </div>
               </div>
 
@@ -411,11 +570,68 @@ export default function AdminEvents() {
                 </Button>
               </div>
 
+              {/* Flyer Upload */}
+              <div>
+                <Label htmlFor="flyer">Event Flyer</Label>
+                <Input id="flyer" type="file" accept="image/*" onChange={handleFlyerChange} />
+                {flyerPreview && (
+                  <img
+                    src={flyerPreview}
+                    alt="Flyer preview"
+                    className="mt-2 h-40 w-auto rounded border"
+                  />
+                )}
+              </div>
+
               <Button type="submit" disabled={loading} className="w-full">
-                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Add Event
+                {(loading || uploadingFlyer) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {uploadingFlyer ? 'Uploading Flyer...' : 'Add Event'}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Existing Events */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Existing Events</CardTitle>
+            <CardDescription>Events fetched from Supabase</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {listLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading events...
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No events found.</div>
+            ) : (
+              <div className="space-y-3">
+                {events.map((ev) => (
+                  <div key={ev.id} className="flex items-start justify-between rounded border p-3">
+                    <div className="space-y-1">
+                      <div className="font-medium">{ev.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        <span>{new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        {ev.time_range && <span> • {ev.time_range}</span>}
+                        {ev.location && <span> • {ev.location}</span>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {ev.category && <span className="mr-2">Category: {ev.category}</span>}
+                        {ev.additional_info?.status && <span className="mr-2">Status: {ev.additional_info.status}</span>}
+                        {typeof ev.capacity === 'number' && (
+                          <span>Capacity: {ev.capacity}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(ev.id)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
