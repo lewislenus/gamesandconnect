@@ -105,21 +105,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.8 }}
               >
-                <Link to="/gallery">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      className="rounded-full text-base px-8 py-6"
-                    >
-                      <Play className="mr-2 h-5 w-5" />
-                      See our adventures
-                    </Button>
-                  </motion.div>
-                </Link>
+
                 <Link to="/events">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -735,7 +721,7 @@ export default function HomePage() {
                   { name: "Pool", emoji: "🎱", level: "Intermediate" },
                   { name: "Table Tennis", emoji: "🏓", level: "Beginner" },
                   { name: "Video Games", emoji: "🎮", level: "All Levels" },
-                  { name: "Trivia", emoji: "🧠", level: "Beginner" }
+
                 ].map((game, index) => (
                   <motion.div 
                     key={index} 
@@ -1088,11 +1074,7 @@ export default function HomePage() {
                       Upcoming Events
                     </Link>
                   </li>
-                  <li>
-                    <Link to="/gallery" className="text-white/80 hover:text-primary transition-colors duration-200">
-                      Photo Gallery
-                    </Link>
-                  </li>
+
                   <li>
                     <Link to="/community" className="text-white/80 hover:text-primary transition-colors duration-200">
                       Community
@@ -1103,11 +1085,7 @@ export default function HomePage() {
                       Join a Team
                     </Link>
                   </li>
-                  <li>
-                    <Link to="/trivia" className="text-white/80 hover:text-primary transition-colors duration-200">
-                      Trivia Night
-                    </Link>
-                  </li>
+
                 </ul>
               </div>
 

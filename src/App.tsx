@@ -10,8 +10,7 @@ import AdminHeader from "./components/AdminHeader";
 import HomePage from "./pages/HomePage";
 import Events from "./pages/Events";
 import Community from "./pages/Community";
-import Gallery from "./pages/Gallery";
-import Trivia from "./pages/Trivia";
+
 import EventDetails from "./pages/EventDetails";
 import UserRegistrations from "./pages/UserRegistrations";
 import AdminLogin from "./pages/AdminLogin";
@@ -58,8 +57,7 @@ const App = () => (
             <Route path="/events" element={<MainLayout><Events /></MainLayout>} />
             <Route path="/events/:id" element={<MainLayout><EventDetails /></MainLayout>} />
             <Route path="/community" element={<MainLayout><Community /></MainLayout>} />
-            <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
-            <Route path="/trivia" element={<MainLayout><Trivia /></MainLayout>} />
+
             <Route path="/my-registrations" element={<MainLayout><UserRegistrations /></MainLayout>} />
             <Route path="/teams" element={<MainLayout><Teams /></MainLayout>} />
             <Route path="/team-red" element={<MainLayout><TeamRed /></MainLayout>} />

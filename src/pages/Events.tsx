@@ -155,7 +155,7 @@ export default function Events() {
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             Discover exciting adventures, connect with amazing people, and create unforgettable memories. 
-            From brain-teasing trivia nights to epic gaming tournaments and breathtaking travel experiences.
+            From epic gaming tournaments to breathtaking travel experiences and community connections.
           </motion.p>
         </div>
       </section>

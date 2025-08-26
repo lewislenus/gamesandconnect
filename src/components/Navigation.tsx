@@ -11,8 +11,6 @@ export const Navigation = () => {
     { name: 'Home', path: '/', icon: Home },
     { name: 'Events', path: '/events', icon: Calendar },
     { name: 'Community', path: '/community', icon: Users },
-    { name: 'Gallery', path: '/gallery', icon: Image },
-    { name: 'Trivia', path: '/trivia', icon: Gamepad2 },
   ];
 
   const isActive = (path: string) => location.pathname === path;
