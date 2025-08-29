@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
 
   // Check if user is admin
-  const checkAdminStatus = async (emailParam?: string): Promise<boolean> => {
+  const checkAdminStatus = useCallback(async (emailParam?: string): Promise<boolean> => {
     const emailToCheck = emailParam ?? user?.email;
     if (!emailToCheck) {
       console.log('❌ No user or email found');
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('❌ Error checking admin status:', error);
       return false;
     }
-  };
+  }, [user?.email]);
 
   // Sign in function
   const signIn = async (email: string, password: string) => {
@@ -190,7 +190,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [checkAdminStatus]);
 
   const value: AuthContextType = {
     user,

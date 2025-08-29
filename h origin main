@@ -1,5 +1,0 @@
-[33ma1bf625[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Remove Gallery and Trivia pages, update App and Navigation components to reflect changes. Adjust text in Events page for clarity.
-[33mb7cd19b[m Refactor TypeScript types in UI components and update Supabase client environment variable handling
-[33m7d5abf6[m Resolve merge conflicts (prefer ours)
-[33m6facf8f[m feat(events): refactor event management and add Cloudinary integration
-[33mc8fb1d6[m Enhanced Supabase Events Fetcher with Error Handling

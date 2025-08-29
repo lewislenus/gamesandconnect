@@ -210,7 +210,7 @@ export default function EventsList() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span>
                     {event.registration_count} registered 
-                    {event.spots > 0 && ` • ${event.spots} spots left`}
+                    {event.total_spots && ` • ${event.total_spots} max capacity`}
                   </span>
                 </div>
               </div>

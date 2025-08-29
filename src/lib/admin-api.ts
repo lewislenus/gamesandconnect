@@ -231,7 +231,7 @@ export async function getTopEvents(): Promise<TopEvent[]> {
 
     // Calculate registrations and revenue per event using registration_count
     // Build registration counts manually (no derived fields)
-    let regCounts: Record<string, number> = {};
+    const regCounts: Record<string, number> = {};
     try {
   const { data: regs } = await (supabase as any).from('registrations').select('event_id');
       if (regs) {
