@@ -14,6 +14,10 @@ export type Database = {
   }
   public: {
     Tables: {
+  // NOTE: The generated types below appear to be from an earlier schema version.
+  // The live database currently uses columns like full_name, phone_number, payment_status
+  // in the registrations table, and events may not include pricing/capacity fields.
+  // Runtime code now casts Supabase client to any where needed to bridge this mismatch.
       admin_users: {
         Row: {
           id: string

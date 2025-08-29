@@ -23,6 +23,7 @@ import TeamRed from "./pages/TeamRed";
 import TeamGreen from "./pages/TeamGreen";
 import TeamBlue from "./pages/TeamBlue";
 import TeamYellow from "./pages/TeamYellow";
+import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 import EventsDatabase from "./pages/EventsDatabase";
 
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/team-green" element={<MainLayout><TeamGreen /></MainLayout>} />
             <Route path="/team-blue" element={<MainLayout><TeamBlue /></MainLayout>} />
             <Route path="/team-yellow" element={<MainLayout><TeamYellow /></MainLayout>} />
+            <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
             <Route path="/events-database" element={<MainLayout><EventsDatabase /></MainLayout>} />
             
             {/* Admin Login Route */}

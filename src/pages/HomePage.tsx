@@ -1,10 +1,110 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Play } from 'lucide-react';
-import { AutoCarousel } from '@/components/ui/auto-carousel';
+import { Calendar, MapPin, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getEvents, Event } from '@/lib/api';
+import { useTypingEffect } from '@/hooks/use-typing-effect';
 
 export default function HomePage() {
+  const [nextEvent, setNextEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  // Image rotation for hero grid
+  const [currentImageSet, setCurrentImageSet] = useState(0);
+  
+  const imageSets = [
+    [
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1344_y4iq2a.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1679_ovnanp.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1684_pv0ohb.jpg"
+    ],
+    [
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915399/_MG_2393_cv5xbp.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915398/_MG_2403_hknyss.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746918906/_MG_2027_oblrvo.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915401/_MG_2185_rqpdrv.jpg"
+    ],
+    [
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1656_yoiklo.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1677_v8n5nu.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1758_mj5kho.jpg",
+      "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1776_eob5jv.jpg"
+    ]
+  ];
+
+  // Typing effect for the hero header
+  const { displayedText: typedText, isTyping } = useTypingEffect({
+    text: "Play.\nTravel.\nConnect.",
+    speed: 150,
+    delay: 800
+  });
+
+  useEffect(() => {
+    async function loadNextEvent() {
+      try {
+        const events = await getEvents();
+        const currentDate = new Date();
+        
+        // Filter for future events and get the nearest one
+        const upcomingEvents = events.filter(event => {
+          const eventDate = new Date(event.date);
+          return eventDate > currentDate;
+        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        if (upcomingEvents.length > 0) {
+          setNextEvent(upcomingEvents[0]);
+        }
+      } catch (error) {
+        console.error('Failed to load next event:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadNextEvent();
+  }, []);
+
+  // Image rotation effect
+  useEffect(() => {
+    const imageRotationTimer = setInterval(() => {
+      setCurrentImageSet((prev) => (prev + 1) % imageSets.length);
+    }, 4000); // Change images every 4 seconds
+
+    return () => clearInterval(imageRotationTimer);
+  }, [imageSets.length]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!nextEvent) return;
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const eventDate = new Date(nextEvent.date).getTime();
+      const distance = eventDate - now;
+
+      if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        setCountdown({ days, hours, minutes, seconds });
+      } else {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [nextEvent]);
+
   return (
     <motion.div 
       className="min-h-screen bg-background"
@@ -14,173 +114,119 @@ export default function HomePage() {
     >
       {/* Hero Section */}
       <section 
-        className="relative min-h-[90vh] flex items-center justify-center overflow-hidden" 
-        style={{ 
-          backgroundColor: '#f7e2dc',
-          backgroundImage: `
-            radial-gradient(circle at 20% 50%, rgba(217, 104, 70, 0.03) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(217, 104, 70, 0.02) 0%, transparent 50%),
-            radial-gradient(circle at 40% 80%, rgba(217, 104, 70, 0.025) 0%, transparent 50%),
-            linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.02) 49%, rgba(255, 255, 255, 0.02) 51%, transparent 52%),
-            linear-gradient(-45deg, transparent 48%, rgba(255, 255, 255, 0.01) 49%, rgba(255, 255, 255, 0.01) 51%, transparent 52%)
-          `,
-          backgroundSize: '600px 600px, 800px 800px, 400px 400px, 20px 20px, 20px 20px'
-        }}
+        className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900"
       >
-        {/* Noise overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.015]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
-            backgroundSize: '128px 128px'
-          }}
-        ></div>
+        {/* Logo-inspired gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-blue-500/10"></div>
         
-        {/* Subtle texture pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='27' cy='7' r='1'/%3E%3Ccircle cx='47' cy='7' r='1'/%3E%3Ccircle cx='7' cy='27' r='1'/%3E%3Ccircle cx='27' cy='27' r='1'/%3E%3Ccircle cx='47' cy='27' r='1'/%3E%3Ccircle cx='7' cy='47' r='1'/%3E%3Ccircle cx='27' cy='47' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3Ccircle cx='17' cy='17' r='1'/%3E%3Ccircle cx='37' cy='17' r='1'/%3E%3Ccircle cx='17' cy='37' r='1'/%3E%3Ccircle cx='37' cy='37' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat'
-          }}
-        ></div>
-        
-        <motion.div 
-          className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            rotate: [0, 180, 360] 
-          }}
-          transition={{ 
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear" 
-          }}
-        ></motion.div>
-        <motion.div 
-          className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            rotate: [360, 180, 0] 
-          }}
-          transition={{ 
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear" 
-          }}
-        ></motion.div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <motion.div 
-              className="text-left"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <div className="mb-8">
-                <motion.h1 
-                  className="text-6xl lg:text-8xl font-black text-foreground mb-6 leading-none"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[80vh]">
+            {/* Left side - Text content */}
+            <div>
+              <motion.h1 
+                className="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                {typedText.split('\n').map((line, index) => (
+                  <div key={index}>
+                    {line === 'Travel.' ? (
+                      <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">{line}</span>
+                    ) : (
+                      line
+                    )}
+                    {index < typedText.split('\n').length - 1 && <br />}
+                  </div>
+                ))}
+                {isTyping && (
+                  <motion.span
+                    className="inline-block w-1 h-16 lg:h-20 bg-gradient-to-b from-orange-400 to-red-500 ml-2"
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
+                  />
+                )}
+              </motion.h1>
+              
+              <p className="text-lg text-white/80 mb-8 max-w-lg leading-relaxed">
+                Join a growing community of young Ghanaians making memories through fun, adventure, and connection. Experience our exciting events, travel adventures, and build lasting friendships.
+              </p>
+              
+              <div className="flex gap-4">
+                <Link to="/events">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8 py-3 rounded-full shadow-lg shadow-orange-500/25"
+                  >
+                    Join the Journey
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="border-blue-400/50 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400 px-8 py-3 rounded-full"
                 >
-                  Play. Travel. Connect.
-                </motion.h1>
-                <motion.p 
-                  className="text-xl text-muted-foreground mb-8 max-w-lg leading-relaxed"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.6 }}
-                >
-                  Join a growing community of young Ghanaians making memories through fun, adventure, and connection. 
-                  Experience our exciting events, travel adventures, and build lasting friendships.
-                </motion.p>
+                  Explore Events
+                </Button>
+              </div>
+            </div>
+
+            {/* Right side - Image grid */}
+            <div className="relative">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Top left - Large image */}
+                <div className="col-span-1 row-span-2">
+                  <motion.img 
+                    key={`main-${currentImageSet}`}
+                    src={imageSets[currentImageSet][0]}
+                    alt="Community event"
+                    className="w-full h-full object-cover rounded-2xl shadow-lg"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6 }}
+                  />
+                </div>
+                
+                {/* Top right - Event image */}
+                <div className="col-span-1">
+                  <motion.img 
+                    key={`top-${currentImageSet}`}
+                    src={imageSets[currentImageSet][1]}
+                    alt="Event activity"
+                    className="w-full h-64 object-cover rounded-2xl shadow-lg"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                  />
+                </div>
+                
+                {/* Bottom right - Activity image */}
+                <div className="col-span-1">
+                  <motion.img 
+                    key={`bottom-${currentImageSet}`}
+                    src={imageSets[currentImageSet][2]}
+                    alt="Group activity"
+                    className="w-full h-64 object-cover rounded-2xl shadow-lg"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                  />
+                </div>
               </div>
               
-              <motion.div 
-                className="flex flex-col sm:flex-row gap-4 mb-12"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-              >
-
-                <Link to="/events">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button 
-                      size="lg" 
-                      className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90"
-                    >
-                      Join the journey
-                    </Button>
-                  </motion.div>
-                </Link>
-              </motion.div>
-
-              {/* Event Info */}
-              <motion.div 
-                className="bg-muted/30 backdrop-blur-sm rounded-2xl p-6 max-w-md"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 1.0 }}
-                whileHover={{ scale: 1.02 }}
-              >
-                <div className="text-right mb-4">
-                  <div className="text-2xl font-bold text-foreground">Next Event</div>
-                  <div className="text-lg text-muted-foreground">Two Days in Cape Coast</div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Join us for an amazing 2-day adventure to Cape Coast featuring historical tours, 
-                  beach fun, and unforgettable memories with the community.
-                </p>
-              </motion.div>
-            </motion.div>
-
-            <motion.div 
-              className="relative"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              {/* Hero Auto-Carousel */}
-              <motion.div 
-                className="aspect-square rounded-3xl overflow-hidden relative shadow-2xl"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-              >
-                <AutoCarousel 
-                  collection="gallery"
-                  autoScrollInterval={5000}
-                  className="h-full"
-                  imageClassName="object-cover"
-                  showControls={false}
-                  showDots={false}
-                  pauseOnHover={true}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
-                <motion.div 
-                  className="absolute bottom-6 left-6 right-6 text-white pointer-events-none"
+              {/* Bottom full-width image */}
+              <div className="mt-6">
+                <motion.img 
+                  key={`full-${currentImageSet}`}
+                  src={imageSets[currentImageSet][3]}
+                  alt="Team building event"
+                  className="w-full h-40 object-cover rounded-2xl shadow-lg"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 1.2 }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Play className="w-5 h-5" />
-                    </motion.div>
-                    <span className="text-sm font-medium">Live the Adventure</span>
-                  </div>
-                  <p className="text-sm opacity-90">Join Ghana's most vibrant community</p>
-                </motion.div>
-              </motion.div>
-            </motion.div>
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -209,8 +255,8 @@ export default function HomePage() {
                 transition={{ duration: 0.3 }}
               >
                 <img 
-                  src="https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/cape-coast-flyer_bqx8md.jpg"
-                  alt="Two Days in Cape Coast Event Flyer"
+                  src={nextEvent?.image_url || "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/cape-coast-flyer_bqx8md.jpg"}
+                  alt={`${nextEvent?.title || 'Upcoming Event'} Flyer`}
                   className="w-full h-full object-cover aspect-[4/5]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
@@ -222,12 +268,12 @@ export default function HomePage() {
                   viewport={{ once: true }}
                 >
                   <motion.div 
-                    className="bg-primary text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg"
+                    className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-orange-500/30"
                     animate={{ 
                       boxShadow: [
-                        "0 0 0 0 rgba(217, 104, 70, 0.7)",
-                        "0 0 0 10px rgba(217, 104, 70, 0)",
-                        "0 0 0 0 rgba(217, 104, 70, 0)"
+                        "0 0 0 0 rgba(249, 115, 22, 0.7)",
+                        "0 0 0 10px rgba(249, 115, 22, 0)",
+                        "0 0 0 0 rgba(249, 115, 22, 0)"
                       ]
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
@@ -244,12 +290,16 @@ export default function HomePage() {
                 >
                   <div className="bg-black/60 backdrop-blur-sm rounded-2xl p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-5 h-5 text-primary" />
-                      <span className="text-sm font-medium">August 22-23, 2025</span>
+                      <Calendar className="w-5 h-5 text-orange-400" />
+                      <span className="text-sm font-medium">
+                        {loading ? 'Loading...' : nextEvent ? nextEvent.date : 'Date TBA'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-primary" />
-                      <span className="text-sm">Cape Coast, Ghana</span>
+                      <MapPin className="w-5 h-5 text-blue-400" />
+                      <span className="text-sm">
+                        {loading ? 'Loading...' : nextEvent ? nextEvent.location : 'Location TBA'}
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -279,7 +329,21 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: 0.8 }}
                 viewport={{ once: true }}
               >
-                Two Days in <span className="text-primary">Cape Coast</span>
+                {loading ? (
+                  'Loading Next Adventure...'
+                ) : nextEvent ? (
+                  <>
+                    {nextEvent.title.split(' ').map((word, index, array) => 
+                      index === array.length - 1 ? (
+                        <span key={index} className="text-primary">{word}</span>
+                      ) : (
+                        word + ' '
+                      )
+                    )}
+                  </>
+                ) : (
+                  <>No Upcoming <span className="text-primary">Adventures</span></>
+                )}
               </motion.h2>
               
               <motion.p 
@@ -289,9 +353,13 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: 1.0 }}
                 viewport={{ once: true }}
               >
-                Join us for an unforgettable 2-day adventure exploring Ghana's historic coastal treasures. 
-                From the haunting dungeons of Cape Coast Castle to the thrilling canopy walks of Kakum National Park, 
-                this journey combines history, nature, and community bonding.
+                {loading ? (
+                  'Loading event details...'
+                ) : nextEvent ? (
+                  nextEvent.description || 'Join us for an exciting upcoming event!'
+                ) : (
+                  'Stay tuned for exciting new adventures coming soon!'
+                )}
               </motion.p>
 
               <motion.div 
@@ -301,30 +369,77 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: 1.2 }}
                 viewport={{ once: true }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <span className="text-primary font-bold">🏰</span>
+                {loading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="text-primary font-bold">⏳</span>
+                    </div>
+                    <span className="text-foreground">Loading event details...</span>
                   </div>
-                  <span className="text-foreground">Cape Coast Castle & Historical Sites</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <span className="text-primary font-bold">🌳</span>
-                  </div>
-                  <span className="text-foreground">Kakum National Park Canopy Walk</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <span className="text-primary font-bold">🏖️</span>
-                  </div>
-                  <span className="text-foreground">Beach Activities & Relaxation</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <span className="text-primary font-bold">🤝</span>
-                  </div>
-                  <span className="text-foreground">Community Bonding & Networking</span>
-                </div>
+                ) : nextEvent ? (
+                  <>
+                    {nextEvent.includes && nextEvent.includes.length > 0 ? (
+                      nextEvent.includes.slice(0, 4).map((item, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-bold">✓</span>
+                          </div>
+                          <span className="text-foreground">{item}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-bold">📅</span>
+                          </div>
+                          <span className="text-foreground">{nextEvent.date} at {nextEvent.time_range || nextEvent.time || 'TBA'}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-bold">📍</span>
+                          </div>
+                          <span className="text-foreground">{nextEvent.location}</span>
+                        </div>
+                        {nextEvent.price && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                              <span className="text-primary font-bold">💰</span>
+                            </div>
+                            <span className="text-foreground">{nextEvent.price}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-bold">🤝</span>
+                          </div>
+                          <span className="text-foreground">Community Bonding & Networking</span>
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                        <span className="text-primary font-bold">�</span>
+                      </div>
+                      <span className="text-foreground">Gaming Tournaments & Competitions</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                        <span className="text-primary font-bold">🌍</span>
+                      </div>
+                      <span className="text-foreground">Weekend Getaways & Adventures</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                        <span className="text-primary font-bold">🤝</span>
+                      </div>
+                      <span className="text-foreground">Community Bonding & Networking</span>
+                    </div>
+                  </>
+                )}
               </motion.div>
 
               <motion.div 
@@ -341,9 +456,9 @@ export default function HomePage() {
                   <Button 
                     size="lg" 
                     className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90"
-                    onClick={() => window.open('/events', '_self')}
+                    onClick={() => nextEvent ? window.open(`/events/${nextEvent.id}`, '_self') : window.open('/events', '_self')}
                   >
-                    Register Now - Limited Spots!
+                    {nextEvent ? `Register for ${nextEvent.title}` : 'Explore Events'}
                   </Button>
                 </motion.div>
                 <motion.div
@@ -368,10 +483,37 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: 1.6 }}
                 viewport={{ once: true }}
               >
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Early Bird Special:</span>
-                  <span className="font-bold text-primary">Save 20% until Aug 18!</span>
-                </div>
+                {loading ? (
+                  <div className="text-center text-muted-foreground text-sm">
+                    Loading countdown...
+                  </div>
+                ) : nextEvent ? (
+                  <div className="text-center">
+                    <div className="text-sm text-muted-foreground mb-2">Event starts in:</div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-primary">{countdown.days}</div>
+                        <div className="text-xs text-muted-foreground">Days</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-primary">{countdown.hours}</div>
+                        <div className="text-xs text-muted-foreground">Hours</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-primary">{countdown.minutes}</div>
+                        <div className="text-xs text-muted-foreground">Min</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-primary">{countdown.seconds}</div>
+                        <div className="text-xs text-muted-foreground">Sec</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm">
+                    No upcoming events scheduled
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           </div>
@@ -515,86 +657,6 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* Upcoming Adventures */}
-      <section className="py-20 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-black text-foreground mb-6">
-              Upcoming <span className="text-primary">Adventures</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              From gaming tournaments to weekend getaways, discover your next adventure with us!
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Two Days in Cape Coast",
-                date: "August 22, 2025",
-                time: "7:00 AM",
-                location: "Cape Coast, Ghana",
-                price: "Contact for pricing",
-                image: "🏰",
-                category: "TRAVEL"
-              },
-              {
-                title: "Gaming Tournament",
-                date: "September 5, 2025",
-                time: "3:00 PM",
-                location: "Accra",
-                price: "GHS 50",
-                image: "🎮",
-                category: "PLAY"
-              },
-              {
-                title: "Community Networking",
-                date: "September 12, 2025",
-                time: "6:00 PM",
-                location: "East Legon",
-                price: "GHS 30",
-                image: "🎉",
-                category: "CONNECT"
-              }
-            ].map((event, index) => (
-              <div key={index} className="bg-muted/30 backdrop-blur-sm rounded-2xl p-6 hover:bg-muted/50 transition-all duration-300 transform hover:scale-105">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-4xl">{event.image}</div>
-                  <div className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {event.category}
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">{event.title}</h3>
-                <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{event.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{event.time}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{event.location}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-primary">{event.price}</span>
-                  <Button 
-                    size="sm" 
-                    className="rounded-full"
-                    onClick={() => window.open('/events', '_self')}
-                  >
-                    Join Adventure
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Games Collection */}
       <motion.section 
         className="py-20 bg-muted/20 overflow-hidden"
@@ -603,9 +665,9 @@ export default function HomePage() {
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full">
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-16 px-4 sm:px-6 lg:px-8"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -895,6 +957,312 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Gallery Section */}
+      <motion.section 
+        className="py-20 bg-slate-900 overflow-hidden"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+      >
+        <div className="w-full">
+          <motion.div 
+            className="text-center mb-16 px-4 sm:px-6 lg:px-8"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <motion.h2 
+              className="text-5xl font-black text-white mb-6"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              Our <span className="text-primary">Gallery</span>
+            </motion.h2>
+            <motion.p 
+              className="text-xl text-white/80 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              viewport={{ once: true }}
+            >
+              Capturing unforgettable moments from our adventures and events
+            </motion.p>
+          </motion.div>
+          
+          {/* Auto-scrolling gallery - First row (left to right) */}
+          <div className="relative mb-8">
+            <div className="flex overflow-hidden">
+              <motion.div 
+                className="flex gap-6 min-w-full"
+                animate={{ x: [0, -1200] }}
+                transition={{ 
+                  duration: 25, 
+                  repeat: Infinity, 
+                  ease: "linear" 
+                }}
+              >
+                {[
+                  { 
+                    title: "Community Event", 
+                    location: "Event Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1344_y4iq2a.jpg", 
+                    category: "Community" 
+                  },
+                  { 
+                    title: "Group Activity", 
+                    location: "Activity Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1679_ovnanp.jpg", 
+                    category: "Activities" 
+                  },
+                  { 
+                    title: "Team Building", 
+                    location: "Venue", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1684_pv0ohb.jpg", 
+                    category: "Team Building" 
+                  },
+                  { 
+                    title: "Social Gathering", 
+                    location: "Meeting Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg", 
+                    category: "Social" 
+                  },
+                  { 
+                    title: "Team Red Champions", 
+                    location: "Tournament Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915399/_MG_2393_cv5xbp.jpg", 
+                    category: "Team Red" 
+                  },
+                  { 
+                    title: "Team Green Adventure", 
+                    location: "Nature Park", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915398/_MG_2403_hknyss.jpg", 
+                    category: "Team Green" 
+                  },
+                  { 
+                    title: "Team Blue Victory", 
+                    location: "Competition Venue", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746918906/_MG_2027_oblrvo.jpg", 
+                    category: "Team Blue" 
+                  },
+                  { 
+                    title: "Team Yellow in Action", 
+                    location: "Event Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915401/_MG_2185_rqpdrv.jpg", 
+                    category: "Team Yellow" 
+                  },
+                  { 
+                    title: "Event Highlights", 
+                    location: "Activity Space", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1424_f0harp.jpg", 
+                    category: "Highlights" 
+                  },
+                  { 
+                    title: "Community Fun", 
+                    location: "Recreation Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1623_olhksw.jpg", 
+                    category: "Recreation" 
+                  },
+                  // Duplicate for seamless loop
+                  { 
+                    title: "Community Event", 
+                    location: "Event Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1344_y4iq2a.jpg", 
+                    category: "Community" 
+                  },
+                  { 
+                    title: "Group Activity", 
+                    location: "Activity Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1679_ovnanp.jpg", 
+                    category: "Activities" 
+                  },
+                  { 
+                    title: "Team Building", 
+                    location: "Venue", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1684_pv0ohb.jpg", 
+                    category: "Team Building" 
+                  },
+                  { 
+                    title: "Social Gathering", 
+                    location: "Meeting Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488675/_MG_1414_ij80mu.jpg", 
+                    category: "Social" 
+                  }
+                ].map((photo, index) => (
+                  <motion.div 
+                    key={index} 
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg min-w-[280px] flex-shrink-0 border border-white/20"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      zIndex: 10,
+                      backgroundColor: "rgba(255, 255, 255, 0.2)"
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="relative h-64 overflow-hidden">
+                      <motion.img
+                        src={photo.image}
+                        alt={photo.title}
+                        className="w-full h-full object-cover"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Auto-scrolling gallery - Second row (right to left) */}
+          <div className="relative">
+            <div className="flex overflow-hidden">
+              <motion.div 
+                className="flex gap-6 min-w-full"
+                animate={{ x: [-1200, 0] }}
+                transition={{ 
+                  duration: 30, 
+                  repeat: Infinity, 
+                  ease: "linear" 
+                }}
+              >
+                {[
+                  { 
+                    title: "Creative Session", 
+                    location: "Studio", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1656_yoiklo.jpg", 
+                    category: "Creative" 
+                  },
+                  { 
+                    title: "Group Workshop", 
+                    location: "Workshop Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1677_v8n5nu.jpg", 
+                    category: "Learning" 
+                  },
+                  { 
+                    title: "Community Celebration", 
+                    location: "Victory Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1758_mj5kho.jpg", 
+                    category: "Celebrations" 
+                  },
+                  { 
+                    title: "Team Collaboration", 
+                    location: "Innovation Lab", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1776_eob5jv.jpg", 
+                    category: "Collaboration" 
+                  },
+                  { 
+                    title: "Event Background", 
+                    location: "Event Space", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/back_k2fwpf.jpg", 
+                    category: "Events" 
+                  },
+                  { 
+                    title: "Team Red Strategy", 
+                    location: "Conference Room", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746918852/_MG_2075_i2peyk.jpg", 
+                    category: "Team Red" 
+                  },
+                  { 
+                    title: "Team Green Unity", 
+                    location: "Training Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915399/_MG_2214_zq4dzb.jpg", 
+                    category: "Team Green" 
+                  },
+                  { 
+                    title: "Team Blue Achievement", 
+                    location: "Awards Ceremony", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915400/_MG_2284_njl6kn.jpg", 
+                    category: "Team Blue" 
+                  },
+                  { 
+                    title: "Team Yellow Leadership", 
+                    location: "Leadership Hub", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915388/_MG_2118_gi8okx.jpg", 
+                    category: "Team Yellow" 
+                  },
+                  { 
+                    title: "Team Red Excellence", 
+                    location: "Excellence Center", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915388/_MG_2318_kszvtt.jpg", 
+                    category: "Team Red" 
+                  },
+                  // Duplicate for seamless loop
+                  { 
+                    title: "Creative Session", 
+                    location: "Studio", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1656_yoiklo.jpg", 
+                    category: "Creative" 
+                  },
+                  { 
+                    title: "Group Workshop", 
+                    location: "Workshop Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1677_v8n5nu.jpg", 
+                    category: "Learning" 
+                  },
+                  { 
+                    title: "Community Celebration", 
+                    location: "Victory Hall", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1758_mj5kho.jpg", 
+                    category: "Celebrations" 
+                  },
+                  { 
+                    title: "Team Collaboration", 
+                    location: "Innovation Lab", 
+                    image: "https://res.cloudinary.com/drkjnrvtu/image/upload/v1742488676/_MG_1776_eob5jv.jpg", 
+                    category: "Collaboration" 
+                  }
+                ].map((photo, index) => (
+                  <motion.div 
+                    key={index} 
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg min-w-[280px] flex-shrink-0 border border-white/20"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      zIndex: 10,
+                      backgroundColor: "rgba(255, 255, 255, 0.2)"
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="relative h-64 overflow-hidden">
+                      <motion.img
+                        src={photo.image}
+                        alt={photo.title}
+                        className="w-full h-full object-cover"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+          
+          <motion.div 
+            className="text-center mt-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <Link to="/gallery">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="rounded-full border-white text-white hover:bg-white hover:text-slate-900"
+              >
+                View Full Gallery
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </motion.section>
+
       {/* Statistics */}
       <section className="py-20 bg-foreground text-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1021,7 +1389,7 @@ export default function HomePage() {
               <div className="lg:col-span-2">
                 <div className="flex items-center gap-3 mb-6">
                   <img 
-                    src="https://res.cloudinary.com/drkjnrvtu/image/upload/v1746917075/gameskkc_ytwhpi.png"
+                    src="https://res.cloudinary.com/drkjnrvtu/image/upload/v1756502369/games_logo_1_gbimmw.svg"
                     alt="Games & Connect"
                     className="h-10 w-auto"
                   />

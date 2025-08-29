@@ -57,6 +57,11 @@ export default {
 				travel: 'hsl(var(--travel))',
 				social: 'hsl(var(--social))',
 				trivia: 'hsl(var(--trivia))',
+				// Logo-inspired custom colors
+				'logo-orange': '25 95% 53%',
+				'logo-red': '14 100% 57%',
+				'logo-blue': '214 78% 51%',
+				'logo-cyan': '195 100% 50%',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

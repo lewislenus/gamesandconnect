@@ -21,11 +21,13 @@ export default function Events() {
       setLoading(true);
       try {
         const data = await getEvents();
-        console.log('Loaded events from database:', data);
+        console.log('Loaded events:', data);
+        
         if (data && data.length > 0) {
           setEvents(data);
+          console.log(`Successfully loaded ${data.length} events`);
         } else {
-          console.log('No events found in database, using sample data');
+          console.log('No events found, using sample data');
           setEvents(sampleEvents);
         }
       } catch (error) {
@@ -38,7 +40,7 @@ export default function Events() {
     }
     
     loadEvents();
-  }, []);
+  }, [toast]);
 
   // Filter events by search term only and sort by date
   // Helper: robustly parse various date formats (ISO, 'June 15, 2025', 'September 14-15, 2025')
@@ -111,9 +113,9 @@ export default function Events() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'almost-full': return 'bg-destructive/10 text-destructive';
-      case 'filling-fast': return 'bg-secondary/10 text-secondary';
-      default: return 'bg-primary/10 text-primary';
+      case 'almost-full': return 'bg-red-100 text-red-600';
+      case 'filling-fast': return 'bg-orange-100 text-orange-600';
+      default: return 'bg-blue-100 text-blue-600';
     }
   };
 
@@ -179,16 +181,6 @@ export default function Events() {
             {!loading && (
               <>
                 Showing {filteredEvents.length} adventures
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="mt-2 text-xs">
-                    <details>
-                      <summary>Debug Info</summary>
-                      <pre className="text-left mt-2 bg-muted p-2 rounded text-xs overflow-auto max-h-32">
-                        {JSON.stringify(events.map(e => ({ id: e.id, title: e.title, date: e.date })), null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -220,8 +212,8 @@ export default function Events() {
             {upcomingEvents.length > 0 && (
               <div className="mb-16">
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="bg-primary/10 p-3 rounded-full">
-                    <Calendar className="h-6 w-6 text-primary" />
+                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 p-3 rounded-full">
+                    <Calendar className="h-6 w-6 text-orange-500" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">Upcoming Adventures</h2>
@@ -246,26 +238,71 @@ export default function Events() {
                     >
                       <Link to={`/events/${event.id}`} className="block">
                         <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden cursor-pointer">
-                          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10 pb-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="text-3xl">{event.image}</div>
-                                <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="outline" className={getStatusColor(event.status)}>
-                                      {getStatusText(event.status)}
-                                    </Badge>
+                          {/* Event Image/Poster */}
+                          {event.image_url ? (
+                            <div className="relative h-48 overflow-hidden">
+                              <img 
+                                src={event.image_url} 
+                                alt={`${event.title} poster`}
+                                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                                onError={(e) => {
+                                  // Show placeholder if image fails to load
+                                  const target = e.currentTarget;
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="bg-gradient-to-br from-muted/50 to-muted/80 h-48 flex items-center justify-center">
+                                        <div class="text-center text-muted-foreground">
+                                          <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-background/20 flex items-center justify-center">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                          </div>
+                                          <p class="text-xs font-medium">Image unavailable</p>
+                                        </div>
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                              <div className="absolute bottom-4 left-4 right-4">
+                                <h3 className="text-xl font-bold text-white drop-shadow-lg mb-2">{event.title}</h3>
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="outline" className="bg-white/90 text-black border-white/40 text-xs">
+                                    {getStatusText(event.status)}
+                                  </Badge>
+                                  <div className="text-lg font-bold text-white bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
+                                    {event.price}
                                   </div>
-                                  <CardTitle className="text-xl mb-1">{event.title}</CardTitle>
-                                  <CardDescription className="text-sm">
-                                    {event.description}
-                                  </CardDescription>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-primary">{event.price}</div>
-                              </div>
                             </div>
+                          ) : (
+                            <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10 pb-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="text-3xl">{event.image}</div>
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Badge variant="outline" className={getStatusColor(event.status)}>
+                                        {getStatusText(event.status)}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-2xl font-bold text-primary">{event.price}</div>
+                                </div>
+                              </div>
+                            </CardHeader>
+                          )}
+
+                          <CardHeader className={event.image_url ? "pb-2" : "pt-0 pb-2"}>
+                            <CardTitle className="text-xl mb-1">{event.title}</CardTitle>
+                            <CardDescription className="text-sm">
+                              {event.description}
+                            </CardDescription>
                           </CardHeader>
 
                           <CardContent className="space-y-4">
@@ -287,26 +324,54 @@ export default function Events() {
                               <span>{event.location}</span>
                             </div>
 
+                            {/* Event Schedule/Agenda */}
+                            {(event.event_schedule || event.agenda) && (event.event_schedule || event.agenda).length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-semibold text-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  Event Schedule
+                                </h4>
+                                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                                  {(event.event_schedule || event.agenda).slice(0, 4).map((item, index) => (
+                                    <div key={index} className="flex items-start gap-2 text-xs">
+                                      <div className="font-mono text-primary min-w-12 flex-shrink-0 bg-primary/5 px-1.5 py-0.5 rounded">
+                                        {item.time}
+                                      </div>
+                                      <div className="text-muted-foreground leading-relaxed">
+                                        {item.activity}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {(event.event_schedule || event.agenda).length > 4 && (
+                                    <div className="text-xs text-muted-foreground italic pl-14">
+                                      +{(event.event_schedule || event.agenda).length - 4} more activities...
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Spots Available</span>
-                                <span>{event.total_spots - event.spots}/{event.total_spots}</span>
+                                <span className="text-muted-foreground">Event Capacity</span>
+                                <span>{event.capacity ? `${event.capacity} spots` : 'Unlimited'}</span>
                               </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div 
-                                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${((event.total_spots - event.spots) / event.total_spots) * 100}%` }}
-                                ></div>
-                              </div>
+                              {event.capacity && (
+                                <div className="w-full bg-muted rounded-full h-2">
+                                  <div 
+                                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                                    style={{ width: '60%' }}
+                                  ></div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex gap-3">
                               <Button 
                                 className="flex-1"
-                                disabled={event.spots === 0}
                                 variant="default"
                               >
-                                {event.spots === 0 ? 'Fully Booked' : 'View Details'}
+                                View Details
                               </Button>
                               <Button 
                                 variant="outline" 
@@ -363,26 +428,71 @@ export default function Events() {
                     >
                       <Link to={`/events/${event.id}`} className="block">
                         <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden cursor-pointer">
-                          <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 pb-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="text-3xl">{event.image}</div>
-                                <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Badge variant="secondary" className="bg-muted text-muted-foreground">
-                                      Past Event
-                                    </Badge>
+                          {/* Event Image/Poster for Past Events */}
+                          {event.image_url ? (
+                            <div className="relative h-48 overflow-hidden">
+                              <img 
+                                src={event.image_url} 
+                                alt={`${event.title} poster`}
+                                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105 grayscale-[50%]"
+                                onError={(e) => {
+                                  // Show placeholder if image fails to load
+                                  const target = e.currentTarget;
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="bg-gradient-to-br from-muted/50 to-muted/80 h-48 flex items-center justify-center">
+                                        <div class="text-center text-muted-foreground">
+                                          <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-background/20 flex items-center justify-center">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                          </div>
+                                          <p class="text-xs font-medium opacity-75">Image unavailable</p>
+                                        </div>
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                              <div className="absolute bottom-4 left-4 right-4">
+                                <h3 className="text-xl font-bold text-white drop-shadow-lg mb-2 opacity-90">{event.title}</h3>
+                                <div className="flex items-center justify-between">
+                                  <Badge variant="secondary" className="bg-white/90 text-muted-foreground border-white/40 text-xs">
+                                    Past Event
+                                  </Badge>
+                                  <div className="text-lg font-bold text-white bg-black/30 px-2 py-1 rounded backdrop-blur-sm opacity-75">
+                                    {event.price}
                                   </div>
-                                  <CardTitle className="text-xl mb-1">{event.title}</CardTitle>
-                                  <CardDescription className="text-sm">
-                                    {event.description}
-                                  </CardDescription>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-muted-foreground">{event.price}</div>
-                              </div>
                             </div>
+                          ) : (
+                            <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 pb-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="text-3xl">{event.image}</div>
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                                        Past Event
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-2xl font-bold text-muted-foreground">{event.price}</div>
+                                </div>
+                              </div>
+                            </CardHeader>
+                          )}
+
+                          <CardHeader className={event.image_url ? "pb-2" : "pt-0 pb-2"}>
+                            <CardTitle className="text-xl mb-1">{event.title}</CardTitle>
+                            <CardDescription className="text-sm">
+                              {event.description}
+                            </CardDescription>
                           </CardHeader>
 
                           <CardContent className="space-y-4">
@@ -404,17 +514,46 @@ export default function Events() {
                               <span>{event.location}</span>
                             </div>
 
+                            {/* Event Schedule/Agenda for Past Events */}
+                            {(event.event_schedule || event.agenda) && (event.event_schedule || event.agenda).length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  Event Schedule
+                                </h4>
+                                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                                  {(event.event_schedule || event.agenda).slice(0, 4).map((item, index) => (
+                                    <div key={index} className="flex items-start gap-2 text-xs">
+                                      <div className="font-mono text-muted-foreground min-w-12 flex-shrink-0 bg-muted/30 px-1.5 py-0.5 rounded">
+                                        {item.time}
+                                      </div>
+                                      <div className="text-muted-foreground leading-relaxed opacity-75">
+                                        {item.activity}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {(event.event_schedule || event.agenda).length > 4 && (
+                                    <div className="text-xs text-muted-foreground italic pl-14 opacity-75">
+                                      +{(event.event_schedule || event.agenda).length - 4} more activities...
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Attendees</span>
-                                <span>{event.total_spots - event.spots}/{event.total_spots}</span>
+                                <span className="text-muted-foreground">Event Capacity</span>
+                                <span>{event.capacity ? `${event.capacity} attendees` : 'Capacity not specified'}</span>
                               </div>
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div 
-                                  className="bg-muted-foreground h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${((event.total_spots - event.spots) / event.total_spots) * 100}%` }}
-                                ></div>
-                              </div>
+                              {event.capacity && (
+                                <div className="w-full bg-muted rounded-full h-2">
+                                  <div 
+                                    className="bg-muted-foreground h-2 rounded-full transition-all duration-300"
+                                    style={{ width: '85%' }}
+                                  ></div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex gap-3">
@@ -483,6 +622,146 @@ export default function Events() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main Footer Content */}
+          <div className="py-16">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Brand Section */}
+              <div className="lg:col-span-2">
+                <div className="flex items-center gap-3 mb-6">
+                  <img 
+                    src="https://res.cloudinary.com/drkjnrvtu/image/upload/v1756502369/games_logo_1_gbimmw.svg"
+                    alt="Games & Connect"
+                    className="h-10 w-auto"
+                  />
+                </div>
+                <p className="text-white/80 mb-6 max-w-md leading-relaxed">
+                  Ghana's most vibrant community where adventure meets connection. Join us for gaming, travel experiences, and meaningful relationships that last a lifetime.
+                </p>
+                <div className="mb-6">
+                  <h4 className="font-semibold text-orange-400 mb-3">Our Mission</h4>
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    To create unforgettable experiences through play, travel, and genuine human connection while celebrating the rich culture of Ghana.
+                  </p>
+                </div>
+                {/* Social Links */}
+                <div className="flex gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
+                    onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+                  >
+                    <span className="text-lg">💬</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
+                    onClick={() => window.open('#', '_blank')}
+                  >
+                    <span className="text-lg">📸</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
+                    onClick={() => window.open('#', '_blank')}
+                  >
+                    <span className="text-lg">🎬</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="font-semibold text-orange-400 mb-4">Quick Links</h4>
+                <ul className="space-y-3 text-sm">
+                  <li>
+                    <Link to="/events" className="text-white/80 hover:text-primary transition-colors duration-200">
+                      Upcoming Events
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/community" className="text-white/80 hover:text-primary transition-colors duration-200">
+                      Community
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/team-red" className="text-white/80 hover:text-primary transition-colors duration-200">
+                      Join a Team
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Contact & Info */}
+              <div>
+                <h4 className="font-semibold text-orange-400 mb-4">Get In Touch</h4>
+                <ul className="space-y-3 text-sm text-white/80">
+                  <li className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span>Accra, Ghana</span>
+                  </li>
+                  <li>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-white/80 hover:text-primary p-0 h-auto font-normal justify-start"
+                      onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+                    >
+                      Join WhatsApp Community
+                    </Button>
+                  </li>
+                </ul>
+
+                {/* Stats */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h5 className="font-medium text-white mb-3">Community Stats</h5>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary">200+</div>
+                      <div className="text-white/60">Members</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary">48+</div>
+                      <div className="text-white/60">Events</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Footer */}
+          <div className="border-t border-white/10 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-white/60">
+                © 2025 Games & Connect. All rights reserved.
+              </div>
+              <div className="flex items-center gap-6 text-sm text-white/60">
+                <button 
+                  onClick={() => alert('Privacy policy coming soon!')}
+                  className="hover:text-primary transition-colors duration-200"
+                >
+                  Privacy Policy
+                </button>
+                <button 
+                  onClick={() => alert('Terms of service coming soon!')}
+                  className="hover:text-primary transition-colors duration-200"
+                >
+                  Terms of Service
+                </button>
+                <span>•</span>
+                <span>Play. Travel. Connect.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </motion.div>
   );
 }

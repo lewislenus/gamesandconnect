@@ -3,6 +3,8 @@ import { Tables } from '@/integrations/supabase/types';
 
 // Enhanced Event type with better typing
 export interface EventData extends Tables<'events'> {
+  image_url?: string; // Add image_url field
+  agenda: Array<{ time: string; activity: string }> | null; // Match the database schema
   formatted_date: string;
   formatted_time: string;
   registration_count: number;

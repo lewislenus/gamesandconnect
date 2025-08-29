@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getDashboardStats, getRecentActivity, getTopEvents } from '@/lib/admin-api';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { getDashboardStats, getRecentActivity, getTopEvents, getEventRegistrations, updateRegistrationStatus, TopEvent } from '@/lib/admin-api';
 import { Skeleton } from "@/components/ui/skeleton";
 import AdminNavigation from '@/components/AdminNavigation';
 import { 
@@ -24,7 +26,13 @@ import {
   Star,
   BarChart3,
   PieChart,
-  Settings
+  Settings,
+  Image as ImageIcon,
+  Phone,
+  Mail,
+  Check,
+  X,
+  MoreHorizontal
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,13 +56,20 @@ interface RecentActivity {
   event?: string;
 }
 
-interface TopEvent {
+interface EventRegistration {
   id: string;
-  title: string;
-  registrations: number;
-  capacity: number;
-  revenue: number;
-  rating: number | null;
+  event_id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: 'confirmed' | 'pending' | 'cancelled';
+  created_at: string;
+  event?: {
+    title: string;
+    date: string;
+    location: string;
+  };
 }
 
 export default function AdminDashboard() {
@@ -62,7 +77,9 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [topEvents, setTopEvents] = useState<TopEvent[]>([]);
+  const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -71,15 +88,22 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [statsData, activityData, eventsData] = await Promise.all([
+      const [statsData, activityData, eventsData, registrationsData] = await Promise.all([
         getDashboardStats(),
         getRecentActivity(),
-        getTopEvents()
+        getTopEvents(),
+        getEventRegistrations()
       ]);
 
       setStats(statsData);
       setRecentActivity(activityData);
       setTopEvents(eventsData);
+      setRegistrations(registrationsData.slice(0, 10)); // Show latest 10 registrations
+      
+      // Check if we got sample/demo data
+  if (registrationsData.length > 0 && String(registrationsData[0].id).startsWith('sample-')) {
+        setIsDemoMode(true);
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       toast({
@@ -89,6 +113,34 @@ export default function AdminDashboard() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (registrationId: string, newStatus: 'confirmed' | 'pending' | 'cancelled') => {
+    try {
+      const result = await updateRegistrationStatus(registrationId, newStatus);
+      if (result.success) {
+        toast({
+          title: "Status Updated",
+          description: `Registration status updated to ${newStatus}`,
+        });
+        
+        // Update local state
+        setRegistrations(prev => prev.map(reg => 
+          reg.id === registrationId 
+            ? { ...reg, status: newStatus }
+            : reg
+        ));
+      } else {
+        throw new Error(result.error || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating registration status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update registration status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -182,6 +234,20 @@ export default function AdminDashboard() {
         {/* Admin Navigation */}
         <AdminNavigation />
 
+        {/* Demo Mode Indicator */}
+        {isDemoMode && (
+          <div className="mb-6">
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <AlertDescription className="flex items-center gap-2 text-yellow-800">
+                <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-800">
+                  Demo Mode
+                </Badge>
+                You're viewing sample registration data. Connect to your Supabase database with proper admin authentication to see real data.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
@@ -219,8 +285,9 @@ export default function AdminDashboard() {
           {/* Charts and Analytics */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="registrations">Registrations</TabsTrigger>
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
               </TabsList>
@@ -289,6 +356,39 @@ export default function AdminDashboard() {
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold">
                             {index + 1}
                           </div>
+                          
+                          {/* Event Poster/Image */}
+                          <div className="flex-shrink-0">
+                            {event.image_url ? (
+                              <div className="relative">
+                                <img 
+                                  src={event.image_url} 
+                                  alt={`${event.title} poster`}
+                                  className="w-12 h-12 rounded-lg object-cover border"
+                                  onError={(e) => {
+                                    // Show placeholder if image fails to load
+                                    e.currentTarget.style.display = 'none';
+                                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (placeholder) placeholder.style.display = 'flex';
+                                  }}
+                                />
+                                {/* Image placeholder */}
+                                <div 
+                                  className="w-12 h-12 rounded-lg bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center border absolute inset-0"
+                                  style={{ display: 'none' }}
+                                >
+                                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                              </div>
+                            ) : (
+                              <div 
+                                className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-lg border"
+                              >
+                                {event.image}
+                              </div>
+                            )}
+                          </div>
+                          
                           <div className="flex-1">
                             <h4 className="font-medium">{event.title}</h4>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -309,6 +409,209 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="registrations" className="space-y-6">
+                {/* Registration Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">Total Registrations</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {stats?.totalRegistrations || 0}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <UserPlus className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm text-muted-foreground">All time</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">Confirmed</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-green-600">
+                        {registrations.filter(r => r.status === 'confirmed').length}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-muted-foreground">Active</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">Pending</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-orange-600">
+                        {registrations.filter(r => r.status === 'pending').length}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Clock className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm text-muted-foreground">Awaiting approval</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">Cancelled</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-red-600">
+                        {registrations.filter(r => r.status === 'cancelled').length}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <X className="h-4 w-4 text-red-600" />
+                        <span className="text-sm text-muted-foreground">Cancelled</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent Registrations Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Registrations</CardTitle>
+                    <CardDescription>
+                      Latest event registrations with management options
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Participant</TableHead>
+                            <TableHead>Event</TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {registrations.length > 0 ? (
+                            registrations.map((registration) => (
+                              <TableRow key={registration.id}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{registration.name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      ID: {String(registration.id).slice(0, 8)}...
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {registration.event?.title || 'Unknown Event'}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {registration.event?.location || 'Location TBA'}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <Mail className="h-3 w-3" />
+                                      {registration.email}
+                                    </div>
+                                    {registration.phone && (
+                                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                        <Phone className="h-3 w-3" />
+                                        {registration.phone}
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge 
+                                    variant={
+                                      registration.status === 'confirmed' ? 'default' :
+                                      registration.status === 'pending' ? 'secondary' :
+                                      'destructive'
+                                    }
+                                  >
+                                    {registration.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {new Date(registration.created_at).toLocaleDateString()}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(registration.created_at).toLocaleTimeString()}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    {registration.status !== 'confirmed' && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleStatusUpdate(registration.id, 'confirmed')}
+                                        className="h-7 w-7 p-0"
+                                        title="Confirm Registration"
+                                      >
+                                        <Check className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                    {registration.status !== 'cancelled' && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleStatusUpdate(registration.id, 'cancelled')}
+                                        className="h-7 w-7 p-0"
+                                        title="Cancel Registration"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0"
+                                      title="More Options"
+                                    >
+                                      <MoreHorizontal className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center py-8">
+                                <div className="text-muted-foreground">
+                                  No registrations found
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    {registrations.length >= 10 && (
+                      <div className="mt-4 text-center">
+                        <Link to="/admin/registrations">
+                          <Button variant="outline">
+                            View All Registrations
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -486,6 +789,12 @@ export default function AdminDashboard() {
                     Create Event
                   </Button>
                 </Link>
+                <Link to="/admin/registrations">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Registrations
+                  </Button>
+                </Link>
                 <Link to="/admin/users">
                   <Button variant="outline" className="w-full justify-start">
                     <Users className="h-4 w-4 mr-2" />
@@ -506,6 +815,51 @@ export default function AdminDashboard() {
                   <Activity className="h-4 w-4 mr-2" />
                   Refresh Data
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Registration Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Registration Summary</CardTitle>
+                <CardDescription>
+                  Today's registration activity
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Today's Registrations</span>
+                  <Badge variant="default" className="bg-blue-100 text-blue-800">
+                    {registrations.filter(r => {
+                      const today = new Date().toDateString();
+                      const regDate = new Date(r.created_at).toDateString();
+                      return today === regDate;
+                    }).length}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Pending Approval</span>
+                  <Badge variant="secondary">
+                    {registrations.filter(r => r.status === 'pending').length}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">This Week</span>
+                  <Badge variant="outline">
+                    {registrations.filter(r => {
+                      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                      const regDate = new Date(r.created_at);
+                      return regDate >= weekAgo;
+                    }).length}
+                  </Badge>
+                </div>
+                {registrations.filter(r => r.status === 'pending').length > 0 && (
+                  <Link to="/admin/registrations">
+                    <Button size="sm" className="w-full mt-2">
+                      Review Pending
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
 

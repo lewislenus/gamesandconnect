@@ -289,25 +289,80 @@ export default function EventsDisplay() {
           {/* Events List */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {result.data.map((event) => (
-              <Card key={event.id} className="hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-3xl">{event.image}</div>
-                      <div>
-                        <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
-                        <CardDescription className="text-sm mt-1">
-                          ID: {event.id.substring(0, 8)}...
-                        </CardDescription>
+              <Card key={event.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden">
+                {/* Event Image/Poster */}
+                {event.image_url ? (
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={event.image_url} 
+                      alt={`${event.title} poster`}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      onError={(e) => {
+                        // Show placeholder if image fails to load
+                        const target = e.currentTarget;
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="bg-gradient-to-br from-muted/50 to-muted/80 h-48 flex items-center justify-center">
+                              <div class="text-center text-muted-foreground">
+                                <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-background/20 flex items-center justify-center">
+                                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                  </svg>
+                                </div>
+                                <p class="text-xs font-medium">Image unavailable</p>
+                              </div>
+                            </div>
+                          `;
+                        }
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="text-lg font-bold text-white drop-shadow-lg mb-2">{event.title}</h3>
+                      <div className="flex items-center justify-between">
+                        {getCategoryBadge(event.category)}
+                        <div className="text-lg font-bold text-white bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
+                          {event.price}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {getCategoryBadge(event.category)}
-                    {getStatusBadge(event.status)}
-                    {getAvailabilityBadge(event.availability_status)}
-                  </div>
+                ) : (
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-3xl">{event.image || '🎮'}</div>
+                        <div>
+                          <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
+                          <CardDescription className="text-sm mt-1">
+                            ID: {event.id.substring(0, 8)}...
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {getCategoryBadge(event.category)}
+                      {getStatusBadge(event.status)}
+                      {getAvailabilityBadge(event.availability_status)}
+                    </div>
+                  </CardHeader>
+                )}
+
+                <CardHeader className={event.image_url ? "pb-2" : "pt-0 pb-2"}>
+                  {event.image_url && (
+                    <>
+                      <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
+                      <CardDescription className="text-sm mt-1">
+                        ID: {event.id.substring(0, 8)}...
+                      </CardDescription>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {getStatusBadge(event.status)}
+                        {getAvailabilityBadge(event.availability_status)}
+                      </div>
+                    </>
+                  )}
                 </CardHeader>
 
                 <CardContent className="space-y-4">
@@ -327,9 +382,36 @@ export default function EventsDisplay() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{event.registration_count}/{event.total_spots} registered</span>
+                      <span>{event.registration_count || 0} registered</span>
                     </div>
                   </div>
+
+                  {/* Event Schedule/Agenda */}
+                  {Array.isArray(event.agenda) && event.agenda.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Event Schedule
+                      </h4>
+                      <div className="space-y-1.5 max-h-28 overflow-y-auto">
+                        {(event.agenda as Array<{ time: string; activity: string }>).slice(0, 3).map((item, index) => (
+                          <div key={index} className="flex items-start gap-2 text-xs">
+                            <div className="font-mono text-primary min-w-12 flex-shrink-0 bg-primary/5 px-1.5 py-0.5 rounded">
+                              {item.time}
+                            </div>
+                            <div className="text-muted-foreground leading-relaxed">
+                              {item.activity}
+                            </div>
+                          </div>
+                        ))}
+                        {(event.agenda as Array<any>).length > 3 && (
+                          <div className="text-xs text-muted-foreground italic pl-14">
+                            +{(event.agenda as Array<any>).length - 3} more activities...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Description */}
                   <p className="text-sm text-muted-foreground line-clamp-3">
@@ -341,22 +423,6 @@ export default function EventsDisplay() {
                     {event.price}
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Registration Progress</span>
-                      <span>{Math.round((event.registration_count / (event.total_spots || 1)) * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ 
-                          width: `${Math.min((event.registration_count / (event.total_spots || 1)) * 100, 100)}%` 
-                        }}
-                      />
-                    </div>
-                  </div>
-
                   {/* Organizer */}
                   {event.organizer && (
                     <div className="text-xs text-muted-foreground">
@@ -365,14 +431,14 @@ export default function EventsDisplay() {
                   )}
 
                   {/* Requirements Preview */}
-                  {event.requirements && event.requirements.length > 0 && (
+                  {event.requirements && Array.isArray(event.requirements) && event.requirements.length > 0 && (
                     <div className="text-xs">
                       <strong className="text-muted-foreground">Requirements:</strong>
                       <div className="mt-1">
                         {event.requirements.slice(0, 2).map((req, index) => (
                           <div key={index} className="flex items-start gap-1">
                             <span className="text-primary">•</span>
-                            <span className="text-muted-foreground">{req}</span>
+                            <span className="text-muted-foreground">{String(req)}</span>
                           </div>
                         ))}
                         {event.requirements.length > 2 && (

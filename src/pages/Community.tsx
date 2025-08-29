@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Users, MessageCircle, Star, Award, Handshake, ArrowRight } from 'lucide-react';
+import { Heart, Users, MessageCircle, Star, Award, Handshake, ArrowRight, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Community() {
   const testimonials = [
@@ -328,6 +329,146 @@ export default function Community() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main Footer Content */}
+          <div className="py-16">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Brand Section */}
+              <div className="lg:col-span-2">
+                <div className="flex items-center gap-3 mb-6">
+                  <img 
+                    src="https://res.cloudinary.com/drkjnrvtu/image/upload/v1756502369/games_logo_1_gbimmw.svg"
+                    alt="Games & Connect"
+                    className="h-10 w-auto"
+                  />
+                </div>
+                <p className="text-white/80 mb-6 max-w-md leading-relaxed">
+                  Ghana's most vibrant community where adventure meets connection. Join us for gaming, travel experiences, and meaningful relationships that last a lifetime.
+                </p>
+                <div className="mb-6">
+                  <h4 className="font-semibold text-orange-400 mb-3">Our Mission</h4>
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    To create unforgettable experiences through play, travel, and genuine human connection while celebrating the rich culture of Ghana.
+                  </p>
+                </div>
+                {/* Social Links */}
+                <div className="flex gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
+                    onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+                  >
+                    <span className="text-lg">💬</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
+                    onClick={() => window.open('#', '_blank')}
+                  >
+                    <span className="text-lg">📸</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
+                    onClick={() => window.open('#', '_blank')}
+                  >
+                    <span className="text-lg">🎬</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="font-semibold text-orange-400 mb-4">Quick Links</h4>
+                <ul className="space-y-3 text-sm">
+                  <li>
+                    <Link to="/events" className="text-white/80 hover:text-primary transition-colors duration-200">
+                      Upcoming Events
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/community" className="text-white/80 hover:text-primary transition-colors duration-200">
+                      Community
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/team-red" className="text-white/80 hover:text-primary transition-colors duration-200">
+                      Join a Team
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Contact & Info */}
+              <div>
+                <h4 className="font-semibold text-orange-400 mb-4">Get In Touch</h4>
+                <ul className="space-y-3 text-sm text-white/80">
+                  <li className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span>Accra, Ghana</span>
+                  </li>
+                  <li>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-white/80 hover:text-primary p-0 h-auto font-normal justify-start"
+                      onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+                    >
+                      Join WhatsApp Community
+                    </Button>
+                  </li>
+                </ul>
+
+                {/* Stats */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h5 className="font-medium text-white mb-3">Community Stats</h5>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary">200+</div>
+                      <div className="text-white/60">Members</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary">48+</div>
+                      <div className="text-white/60">Events</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Footer */}
+          <div className="border-t border-white/10 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-white/60">
+                © 2025 Games & Connect. All rights reserved.
+              </div>
+              <div className="flex items-center gap-6 text-sm text-white/60">
+                <button 
+                  onClick={() => alert('Privacy policy coming soon!')}
+                  className="hover:text-primary transition-colors duration-200"
+                >
+                  Privacy Policy
+                </button>
+                <button 
+                  onClick={() => alert('Terms of service coming soon!')}
+                  className="hover:text-primary transition-colors duration-200"
+                >
+                  Terms of Service
+                </button>
+                <span>•</span>
+                <span>Play. Travel. Connect.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </motion.div>
   );
 }

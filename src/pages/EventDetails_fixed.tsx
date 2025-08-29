@@ -3,12 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Calendar, Clock, MapPin, Users, ArrowLeft, Share2, Heart, Phone, Mail, User, Download, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getEventById, sampleEvents, Event } from '@/lib/api';
+import { getEventById, sampleEvents, Event, registerForEvent } from '@/lib/api';
 import { motion } from 'framer-motion';
-import EventRegistrationForm from '@/components/EventRegistrationForm';
 
 export default function EventDetails() {
   const { id } = useParams();
@@ -17,6 +20,14 @@ export default function EventDetails() {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const [registrationData, setRegistrationData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    emergencyContact: '',
+    dietaryRequirements: '',
+    additionalInfo: ''
+  });
 
   useEffect(() => {
     async function loadEvent() {
@@ -67,13 +78,94 @@ export default function EventDetails() {
     loadEvent();
   }, [id, navigate, toast]);
 
-  const handleRegistrationSuccess = () => {
-    // Reload event data to get updated information
-    if (id) {
-      getEventById(id).then((data) => {
-        if (data) setEvent(data);
+  const [registrationLoading, setRegistrationLoading] = useState(false);
+  
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!registrationData.name || !registrationData.email || !registrationData.phone) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields (Name, Email, Phone).",
+        variant: "destructive",
       });
+      return;
     }
+
+    if (!id || !event) {
+      toast({
+        title: "Error",
+        description: "Event information is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRegistrationLoading(true);
+    
+    try {
+      const result = await registerForEvent(id, {
+        name: registrationData.name,
+        email: registrationData.email,
+        phone: registrationData.phone,
+        emergencyContact: registrationData.emergencyContact,
+        dietaryRequirements: registrationData.dietaryRequirements,
+        additionalInfo: registrationData.additionalInfo
+      });
+      
+      if (result.success) {
+        if (result.isWaitlist) {
+          toast({
+            title: "Added to Waitlist",
+            description: `This event is full, but you've been added to the waitlist. We'll notify you if a spot becomes available.`,
+          });
+        } else {
+          toast({
+            title: "Registration Successful!",
+            description: `You have been registered for ${event.title}. Check your email for confirmation details.`,
+          });
+          
+          // Update the local event data to reflect the registration
+          setEvent(prev => ({
+            ...prev,
+            spots: prev!.spots - 1
+          }));
+        }
+        
+        setShowRegistrationForm(false);
+        setRegistrationData({
+          name: '',
+          email: '',
+          phone: '',
+          emergencyContact: '',
+          dietaryRequirements: '',
+          additionalInfo: ''
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: result.error || "There was an error processing your registration.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration Error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setRegistrationData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handleDownloadFlyer = () => {
@@ -259,29 +351,32 @@ export default function EventDetails() {
                 alt={`${event.title} event poster`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  // Show placeholder if image fails to load
+                  // Fallback to emoji if image fails to load
                   e.currentTarget.style.display = 'none';
-                  const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-                  if (placeholder) placeholder.style.display = 'flex';
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
                 }}
               />
-              {/* Image placeholder */}
+              {/* Fallback emoji display */}
               <div 
-                className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center"
+                className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-6xl"
                 style={{ display: 'none' }}
               >
-                <div className="text-center text-muted-foreground">
-                  <div className="w-16 h-16 mx-auto mb-3 rounded-lg bg-background/20 flex items-center justify-center">
-                    <ImageIcon className="w-8 h-8" />
-                  </div>
-                  <p className="text-sm font-medium">Image unavailable</p>
-                  <p className="text-xs">Poster could not be loaded</p>
-                </div>
+                {event.image}
               </div>
               {/* Overlay with event info */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent">
                 <div className="absolute bottom-4 left-4 text-white">
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">{event.title}</h1>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className={getCategoryColor(event.category)}>
+                      {event.category?.toUpperCase()}
+                    </Badge>
+                    <Badge variant="outline" className="bg-white/20 text-white border-white/40">
+                      {getStatusText(event.status || 'open')}
+                    </Badge>
+                  </div>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.title}</h1>
+                  <p className="text-lg md:text-xl text-white/90">{event.description}</p>
                 </div>
               </div>
             </div>
@@ -326,7 +421,7 @@ export default function EventDetails() {
           </div>
 
           {/* Event Quick Info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="flex items-center gap-3 p-4 bg-muted/20 rounded-lg">
               <Calendar className="h-5 w-5 text-primary" />
               <div>
@@ -348,6 +443,27 @@ export default function EventDetails() {
                 <div className="text-sm text-muted-foreground">Location</div>
               </div>
             </div>
+            <div className="flex items-center gap-3 p-4 bg-muted/20 rounded-lg">
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <div className="font-medium">{event.spots} spots left</div>
+                <div className="text-sm text-muted-foreground">of {event.total_spots} total</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+              <span>Registration Progress</span>
+              <span>{event.total_spots - event.spots}/{event.total_spots} registered</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-3">
+              <div 
+                className="bg-primary h-3 rounded-full transition-all duration-300"
+                style={{ width: `${((event.total_spots - event.spots) / event.total_spots) * 100}%` }}
+              ></div>
+            </div>
           </div>
 
           {/* Registration Button */}
@@ -355,118 +471,18 @@ export default function EventDetails() {
             <Button 
               size="lg" 
               className="flex-1 max-w-md"
+              disabled={event.spots === 0 || registrationLoading}
               onClick={() => setShowRegistrationForm(true)}
             >
-              Register Now
+              {registrationLoading ? 'Processing...' : 
+               event.spots === 0 ? 'Fully Booked' : 'Register Now'}
             </Button>
           </div>
         </div>
 
-        {/* Event Details Grid */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* About Event */}
-            <Card>
-              <CardHeader>
-                <CardTitle>About This Event</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
-                  {event.long_description}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Event Schedule */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Schedule</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {(event.event_schedule || event.agenda)?.map((item, index) => (
-                    <div key={index} className="flex gap-4 p-3 bg-muted/20 rounded-lg">
-                      <div className="font-mono text-sm font-medium text-primary min-w-20">
-                        {item.time}
-                      </div>
-                      <div className="font-medium">{item.activity}</div>
-                    </div>
-                  ))}
-                  {!(event.event_schedule || event.agenda) || (event.event_schedule || event.agenda)?.length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">
-                      <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium mb-2">Schedule Coming Soon</p>
-                      <p className="text-sm">The detailed event schedule will be available soon.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* What's Included */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What's Included</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {event.includes?.map((item, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-sm">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Requirements */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Requirements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {event.requirements?.map((item, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-sm">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Organizer Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Organizer</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="font-medium">{event.organizer}</div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Experienced in organizing community events and gaming tournaments.
-                </p>
-                <Button variant="outline" size="sm" className="w-full">
-                  Contact Organizer
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Event Poster Section - Full Width */}
+        {/* Event Flyer Section - Updated to use image_url if available */}
         {(event.flyer || event.image_url) && (
-          <div className="mt-8">
+          <div className="mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -480,50 +496,34 @@ export default function EventDetails() {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Poster Preview */}
-                    <div className="space-y-4">
-                      <div className="relative bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg p-4 border-2 border-dashed border-muted-foreground/20">
-                        {event.image_url ? (
-                          <div className="aspect-[3/4] rounded-lg overflow-hidden relative">
-                            <img 
-                              src={event.image_url} 
-                              alt={`${event.title} poster`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                // Show placeholder if image fails to load
-                                e.currentTarget.style.display = 'none';
-                                const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (placeholder) placeholder.style.display = 'flex';
-                              }}
-                            />
-                            {/* Image placeholder */}
-                            <div 
-                              className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center rounded-lg"
-                              style={{ display: 'none' }}
-                            >
-                              <div className="text-center text-muted-foreground">
-                                <div className="w-12 h-12 mx-auto mb-2 rounded-lg bg-background/20 flex items-center justify-center">
-                                  <ImageIcon className="w-6 h-6" />
-                                </div>
-                                <p className="text-xs font-medium">Poster unavailable</p>
-                              </div>
-                            </div>
+                  <div className="space-y-4">
+                    <div className="relative bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg p-4 border-2 border-dashed border-muted-foreground/20">
+                      {event.image_url ? (
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden">
+                          <img 
+                            src={event.image_url} 
+                            alt={`${event.title} poster`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[3/4] bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-6xl mb-4">{event.image}</div>
+                            <div className="text-lg font-bold text-foreground mb-2">{event.title}</div>
+                            <div className="text-sm text-muted-foreground mb-2">{event.date}</div>
+                            <div className="text-sm text-muted-foreground">{event.location}</div>
+                            <div className="mt-4 text-2xl font-bold text-primary">{event.price}</div>
                           </div>
-                        ) : (
-                          <div className="aspect-[3/4] bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg flex items-center justify-center">
-                            <div className="text-center">
-                              <div className="text-6xl mb-4">{event.image}</div>
-                              <div className="text-lg font-bold text-foreground mb-2">{event.title}</div>
-                              <div className="text-sm text-muted-foreground mb-2">{event.date}</div>
-                              <div className="text-sm text-muted-foreground">{event.location}</div>
-                              <div className="mt-4 text-2xl font-bold text-primary">{event.price}</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground text-center">
-                        Official event poster - {event.flyer?.alt || `${event.title} Event Poster`}
-                      </p>
-                    </div>                  {/* Poster Actions */}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center">
+                      Official event poster - {event.flyer?.alt || `${event.title} Event Poster`}
+                    </p>
+                  </div>
+
+                  {/* Poster Actions */}
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-semibold mb-3">Get the Poster</h4>
@@ -610,17 +610,200 @@ export default function EventDetails() {
             </Card>
           </div>
         )}
+
+        {/* Event Details Grid */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* About Event */}
+            <Card>
+              <CardHeader>
+                <CardTitle>About This Event</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  {event.long_description}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Event Agenda */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Event Schedule</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {event.agenda?.map((item, index) => (
+                    <div key={index} className="flex gap-4 p-3 bg-muted/20 rounded-lg">
+                      <div className="font-mono text-sm font-medium text-primary min-w-20">
+                        {item.time}
+                      </div>
+                      <div className="font-medium">{item.activity}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* What's Included */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">What's Included</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {event.includes?.map((item, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Requirements */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Requirements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {event.requirements?.map((item, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Organizer Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Organizer</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="font-medium">{event.organizer}</div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Experienced in organizing community events and gaming tournaments.
+                </p>
+                <Button variant="outline" size="sm" className="w-full">
+                  Contact Organizer
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Event Registration Form */}
-      {event && (
-        <EventRegistrationForm
-          event={event}
-          open={showRegistrationForm}
-          onOpenChange={setShowRegistrationForm}
-          onRegistrationSuccess={handleRegistrationSuccess}
-        />
-      )}
+      {/* Registration Form Dialog */}
+      <Dialog open={showRegistrationForm} onOpenChange={setShowRegistrationForm}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Register for {event.title}</DialogTitle>
+            <DialogDescription>
+              Fill in your details to register for this event. All fields marked with * are required.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleRegistrationSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                value={registrationData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter your full name"
+                required
+                disabled={registrationLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={registrationData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="your.email@example.com"
+                required
+                disabled={registrationLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={registrationData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="+233 XX XXX XXXX"
+                required
+                disabled={registrationLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="emergency">Emergency Contact</Label>
+              <Input
+                id="emergency"
+                type="text"
+                value={registrationData.emergencyContact}
+                onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
+                placeholder="Emergency contact number"
+                disabled={registrationLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="dietary">Dietary Requirements</Label>
+              <Input
+                id="dietary"
+                type="text"
+                value={registrationData.dietaryRequirements}
+                onChange={(e) => handleInputChange('dietaryRequirements', e.target.value)}
+                placeholder="Any allergies or dietary restrictions"
+                disabled={registrationLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="additional">Additional Information</Label>
+              <Textarea
+                id="additional"
+                value={registrationData.additionalInfo}
+                onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
+                placeholder="Anything else you'd like us to know?"
+                rows={3}
+                disabled={registrationLoading}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowRegistrationForm(false)} disabled={registrationLoading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={registrationLoading}>
+                {registrationLoading ? 'Processing...' : 'Register for Event'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

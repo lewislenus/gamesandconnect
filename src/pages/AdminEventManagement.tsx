@@ -19,7 +19,8 @@ import {
   Calendar,
   MapPin,
   DollarSign,
-  AlertTriangle
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { deleteEvent } from '@/lib/admin-api';
@@ -231,7 +232,7 @@ export default function AdminEventManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Event</TableHead>
+                    <TableHead className="w-80">Event</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Location</TableHead>
@@ -244,16 +245,61 @@ export default function AdminEventManagement() {
                   {filteredEvents.map((event) => (
                     <TableRow key={event.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium flex items-center gap-2">
-                            <span className="text-lg">{event.image}</span>
-                            {event.title}
+                        <div className="flex items-start gap-3">
+                          {/* Event Poster/Image */}
+                          <div className="flex-shrink-0">
+                            {event.image_url ? (
+                              <div className="relative">
+                                <img 
+                                  src={event.image_url} 
+                                  alt={`${event.title} poster`}
+                                  className="w-16 h-16 rounded-lg object-cover border"
+                                  onError={(e) => {
+                                    // Show placeholder if image fails to load
+                                    e.currentTarget.style.display = 'none';
+                                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (placeholder) placeholder.style.display = 'flex';
+                                  }}
+                                />
+                                {/* Image placeholder */}
+                                <div 
+                                  className="w-16 h-16 rounded-lg bg-gradient-to-br from-muted/50 to-muted/80 flex items-center justify-center border absolute inset-0"
+                                  style={{ display: 'none' }}
+                                >
+                                  <div className="text-center text-muted-foreground">
+                                    <Eye className="w-5 h-5 mx-auto mb-1" />
+                                    <p className="text-xs">No image</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div 
+                                className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center text-2xl border"
+                              >
+                                {event.image}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {event.description}
-                          </div>
-                          <div className="text-sm font-medium text-primary">
-                            {event.price}
+                          
+                          {/* Event Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">
+                              {event.title}
+                            </div>
+                            <div className="text-xs text-muted-foreground overflow-hidden text-ellipsis">
+                              {event.description}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="text-xs font-medium text-primary">
+                                {event.price}
+                              </div>
+                              {event.agenda && event.agenda.length > 0 && (
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Schedule
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </TableCell>

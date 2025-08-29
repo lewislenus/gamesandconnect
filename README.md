@@ -11,6 +11,9 @@
 - 👥 **Community**: Connect with like-minded gamers across Ghana
 - 📸 **Gallery**: Share and explore gaming moments and event photos
 - 🏆 **Competitions**: Participate in various gaming competitions and win prizes
+- 📧 **Email Notifications**: Automatic confirmation emails for event registrations
+- 🎫 **Event Registration**: Streamlined registration process with confirmation numbers
+- 💳 **Payment Integration**: MTN Mobile Money payment information included
 
 ## Project info
 
@@ -71,6 +74,34 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Database & Authentication)
+- EmailJS (Email Notifications)
+- Framer Motion (Animations)
+
+## Email Notification System
+
+This project includes a comprehensive email notification system for event registrations using EmailJS.
+
+### Features
+- ✅ Automatic confirmation emails after registration
+- ✅ Professional HTML email templates
+- ✅ Unique confirmation numbers
+- ✅ Event details and payment information
+- ✅ Environment-based configuration
+- ✅ Error handling and validation
+
+### Setup Instructions
+1. See `EMAILJS_SETUP.md` for detailed setup instructions
+2. Copy `.env.example` to `.env.local` and configure EmailJS credentials
+3. Create email templates in your EmailJS dashboard using `EMAIL_TEMPLATES.md`
+4. Test the system using the EmailTestPanel component
+
+### Files Added
+- `src/lib/emailjs.ts` - EmailJS service implementation
+- `src/components/EmailTestPanel.tsx` - Testing and configuration panel
+- `EMAILJS_SETUP.md` - Complete setup guide
+- `EMAIL_TEMPLATES.md` - HTML email templates
+- Updated `.env.example` with EmailJS configuration
 
 ## How can I deploy this project?
 

@@ -18,11 +18,11 @@ interface EventForm {
   time_range: string;
   location: string;
   category: 'trivia' | 'gaming' | 'travel' | 'social' | '';
-  capacity: number;
   price: string;
   image_url: string; // emoji or url fallback
   status: 'open' | 'filling-fast' | 'almost-full' | 'full' | '';
   organizer: string;
+  capacity: number | null; // new required DB column
   requirements: string[];
   includes: string[];
   agenda: { time: string; activity: string }[];
@@ -36,11 +36,11 @@ const initialForm: EventForm = {
   time_range: '',
   location: '',
   category: 'social',
-  capacity: 0,
   price: '',
   image_url: '🎮',
   status: 'open',
   organizer: '',
+  capacity: null,
   requirements: [''],
   includes: [''],
   agenda: [{ time: '', activity: '' }]
@@ -56,11 +56,12 @@ interface AdminEventRow {
   description: string;
   image_url?: string | null;
   price?: string | null;
-  capacity: number;
+  capacity?: number | null;
   created_at?: string | null;
   additional_info?: { long_description?: string; organizer?: string; status?: string } | null;
   gallery?: any;
-  agenda?: Array<{ time: string; activity: string }> | null;
+  event_schedule?: string | null; // raw text version from DB
+  agenda?: Array<{ time: string; activity: string }> | null; // parsed from event_schedule for UI convenience
   requirements?: string[] | null;
   includes?: string[] | null;
   category?: string | null;
@@ -96,11 +97,21 @@ export default function AdminEvents() {
         description: ev.description,
         image_url: ev.image_url ?? null,
         price: ev.price ?? null,
-        capacity: ev.capacity,
+        capacity: ev.capacity ?? null,
         created_at: ev.created_at ?? null,
         additional_info: ev.additional_info ?? null,
         gallery: ev.gallery ?? null,
-        agenda: Array.isArray(ev.agenda) ? ev.agenda : null,
+        event_schedule: ev.event_schedule ?? null,
+        agenda: ev.event_schedule
+          ? String(ev.event_schedule)
+              .split(/\n+/)
+              .map((line: string) => line.trim())
+              .filter(Boolean)
+              .map((line: string) => {
+                const [time, ...rest] = line.split(/\s+-\s+/); // split on ' - '
+                return { time: time || '', activity: rest.join(' - ') || '' };
+              })
+          : null,
         requirements: Array.isArray(ev.requirements) ? ev.requirements : null,
         includes: Array.isArray(ev.includes) ? ev.includes : null,
         category: ev.category ?? null,
@@ -229,7 +240,7 @@ export default function AdminEvents() {
       if (!form.time_range?.trim()) throw new Error('Please provide a time range.');
       if (!form.location?.trim()) throw new Error('Please provide a location.');
       if (!form.title?.trim() || !form.description?.trim()) throw new Error('Title and Description are required.');
-      if (!Number.isFinite(form.capacity) || form.capacity <= 0) throw new Error('Capacity must be a positive number.');
+  if (form.capacity == null || isNaN(form.capacity) || form.capacity <= 0) throw new Error('Capacity is required and must be > 0.');
 
       // Upload flyer if provided
       let flyerUrl: string | null = null;
@@ -252,12 +263,13 @@ export default function AdminEvents() {
         time_range: form.time_range,
         location: form.location,
         category: form.category || null,
-        capacity: form.capacity,
         price: form.price || null,
-        image_url: flyerUrl || form.image_url || null,
+        image_url: flyerUrl || form.image_url,
+  capacity: form.capacity!,
         requirements: cleanRequirements,
         includes: cleanIncludes,
-        agenda: cleanAgenda,
+  // Convert agenda array to a newline separated string for event_schedule column
+  event_schedule: cleanAgenda.map(a => `${a.time} - ${a.activity}`).join('\n') || null,
         additional_info: {
           long_description: form.long_description,
           organizer: form.organizer,
@@ -450,23 +462,17 @@ export default function AdminEvents() {
                     required
                   />
                 </div>
-              </div>
-
-              {/* Capacity */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="capacity">Capacity</Label>
                   <Input
                     id="capacity"
                     type="number"
-                    value={form.capacity}
-                    onChange={(e) => setForm({ ...form, capacity: parseInt(e.target.value) || 0 })}
+                    min={1}
+                    value={form.capacity ?? ''}
+                    onChange={(e) => setForm({ ...form, capacity: e.target.value ? parseInt(e.target.value, 10) : null })}
+                    placeholder="e.g. 50"
                     required
                   />
-                </div>
-                <div>
-                  <Label htmlFor="spots">Available Spots (deprecated)</Label>
-                  <Input id="spots" type="number" value={0} disabled />
                 </div>
               </div>
 
@@ -608,19 +614,31 @@ export default function AdminEvents() {
               <div className="space-y-3">
                 {events.map((ev) => (
                   <div key={ev.id} className="flex items-start justify-between rounded border p-3">
-                    <div className="space-y-1">
-                      <div className="font-medium">{ev.title}</div>
-                      <div className="text-sm text-muted-foreground">
-                        <span>{new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                        {ev.time_range && <span> • {ev.time_range}</span>}
-                        {ev.location && <span> • {ev.location}</span>}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {ev.category && <span className="mr-2">Category: {ev.category}</span>}
-                        {ev.additional_info?.status && <span className="mr-2">Status: {ev.additional_info.status}</span>}
-                        {typeof ev.capacity === 'number' && (
-                          <span>Capacity: {ev.capacity}</span>
-                        )}
+                    <div className="flex items-start gap-4 flex-grow">
+                      {ev.image_url &&
+                        (ev.image_url.startsWith('http') ? (
+                          <img
+                            src={ev.image_url}
+                            alt={ev.title}
+                            className="h-24 w-24 rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-24 w-24 items-center justify-center rounded-md bg-gray-100 text-4xl">
+                            {ev.image_url}
+                          </div>
+                        ))}
+                      <div className="space-y-1 flex-grow">
+                        <div className="font-medium">{ev.title}</div>
+                        <div className="text-sm text-muted-foreground">
+                          <span>{new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                          {ev.time_range && <span> • {ev.time_range}</span>}
+                          {ev.location && <span> • {ev.location}</span>}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {ev.category && <span className="mr-2">Category: {ev.category}</span>}
+                          {ev.additional_info?.status && <span className="mr-2">Status: {ev.additional_info.status}</span>}
+                          {typeof ev.capacity === 'number' && <span className="mr-2">Capacity: {ev.capacity}</span>}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
