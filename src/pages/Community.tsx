@@ -133,7 +133,12 @@ export default function Community() {
             ))}
           </motion.div>
 
-          <Button variant="hero" size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
+          <Button 
+            variant="hero" 
+            size="lg" 
+            className="bg-green-500 text-white hover:bg-green-600 text-lg px-8 py-4"
+            onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+          >
             Join WhatsApp Group
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
@@ -183,21 +188,21 @@ export default function Community() {
               <Button 
                 variant="hero" 
                 size="lg"
-                onClick={() => window.open('https://chat.whatsapp.com/invite-link', '_blank')}
+                onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
               >
                 Join Main Community
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                onClick={() => window.open('https://chat.whatsapp.com/accra-link', '_blank')}
+                onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
               >
                 Accra Adventurers
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                onClick={() => window.open('https://chat.whatsapp.com/kumasi-link', '_blank')}
+                onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
               >
                 Kumasi Explorers
               </Button>
@@ -310,7 +315,11 @@ export default function Community() {
                       <div className="text-sm text-muted-foreground">{role.benefits}</div>
                     </div>
                   </div>
-                  <Button className="w-full mt-4" variant="community">
+                  <Button 
+                    className="w-full mt-4" 
+                    variant="community"
+                    onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+                  >
                     Apply to Volunteer
                     <Handshake className="ml-2 h-4 w-4" />
                   </Button>
@@ -323,7 +332,11 @@ export default function Community() {
             <p className="text-muted-foreground mb-4">
               Interested in volunteering but don't see the right fit?
             </p>
-            <Button variant="outline" size="lg">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+            >
               Contact Us About Other Opportunities
             </Button>
           </div>

@@ -616,7 +616,11 @@ export default function Events() {
                 Join Our Community
               </Button>
             </Link>
-            <Button variant="outline" size="lg">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => window.open('https://chat.whatsapp.com/LT0Zolnz9fMLm7b7aKtQld', '_blank')}
+            >
               Suggest an Adventure
             </Button>
           </div>
@@ -661,7 +665,7 @@ export default function Events() {
                     variant="outline" 
                     size="icon"
                     className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
-                    onClick={() => window.open('#', '_blank')}
+                    onClick={() => window.open('https://instagram.com/gamesandconnectgh', '_blank')}
                   >
                     <span className="text-lg">📸</span>
                   </Button>
@@ -669,7 +673,7 @@ export default function Events() {
                     variant="outline" 
                     size="icon"
                     className="bg-white/10 border-white/20 hover:bg-white/20 text-white"
-                    onClick={() => window.open('#', '_blank')}
+                    onClick={() => window.open('https://tiktok.com/@gamesandconnectgh', '_blank')}
                   >
                     <span className="text-lg">🎬</span>
                   </Button>

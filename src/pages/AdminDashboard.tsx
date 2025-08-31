@@ -7,7 +7,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { getDashboardStats, getRecentActivity, getTopEvents, getEventRegistrations, updateRegistrationStatus, TopEvent } from '@/lib/admin-api';
+import { getTeamStats, TeamStats } from '@/lib/team-api';
+import { getGalleryItems, uploadToCloudinary, saveGalleryItem, deleteGalleryItem, GalleryItem } from '@/lib/gallery-api';
 import { Skeleton } from "@/components/ui/skeleton";
 import AdminNavigation from '@/components/AdminNavigation';
 import { 
@@ -29,10 +33,15 @@ import {
   Settings,
   Image as ImageIcon,
   Phone,
+  Download,
+  RefreshCw,
   Mail,
   Check,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  Upload,
+  Trash2,
+  Edit
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -78,8 +87,11 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [topEvents, setTopEvents] = useState<TopEvent[]>([]);
   const [registrations, setRegistrations] = useState<EventRegistration[]>([]);
+  const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -88,17 +100,25 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [statsData, activityData, eventsData, registrationsData] = await Promise.all([
+      const [statsData, activityData, eventsData, registrationsData, teamStatsData, galleryData] = await Promise.all([
         getDashboardStats(),
         getRecentActivity(),
         getTopEvents(),
-        getEventRegistrations()
+        getEventRegistrations(),
+        getTeamStats(),
+        getGalleryItems()
       ]);
 
       setStats(statsData);
       setRecentActivity(activityData);
       setTopEvents(eventsData);
       setRegistrations(registrationsData.slice(0, 10)); // Show latest 10 registrations
+      setGalleryItems(galleryData);
+      
+      // Set team stats
+      if (teamStatsData.success && teamStatsData.data) {
+        setTeamStats(teamStatsData.data);
+      }
       
       // Check if we got sample/demo data
   if (registrationsData.length > 0 && String(registrationsData[0].id).startsWith('sample-')) {
@@ -113,6 +133,137 @@ export default function AdminDashboard() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImage(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      for (const file of Array.from(files)) {
+        try {
+          // Validate file size (10MB limit)
+          if (file.size > 10 * 1024 * 1024) {
+            toast({
+              title: "File Too Large",
+              description: `${file.name} exceeds 10MB limit.`,
+              variant: "destructive",
+            });
+            errorCount++;
+            continue;
+          }
+
+          // Upload to Cloudinary
+          const uploadResult = await uploadToCloudinary(file);
+          if (!uploadResult.success) {
+            console.error('[GalleryUpload] Failed for', file.name, uploadResult.error);
+            toast({
+              title: 'Upload Failed',
+              description: `${file.name}: ${uploadResult.error || 'Unknown error'}`,
+              variant: 'destructive'
+            });
+            errorCount++;
+            continue;
+          }
+
+          if (uploadResult.url) {
+            // Save to database
+            const galleryItem = {
+              type: file.type.startsWith('video/') ? 'video' as const : 'image' as const,
+              url: uploadResult.url,
+              title: file.name.split('.')[0], // Use filename without extension as title
+              description: `Uploaded ${file.type.startsWith('video/') ? 'video' : 'image'}`,
+              uploaded_by: 'admin', // In real app, get from auth context
+              is_active: true,
+            };
+
+            const saveResult = await saveGalleryItem(galleryItem);
+            
+            if (saveResult.success) {
+              successCount++;
+            } else {
+              console.warn('Database save failed:', saveResult.error);
+              // Still count as success if upload worked, we can retry DB save later
+              successCount++;
+            }
+          } else {
+            console.error('Upload failed for file:', file.name);
+            errorCount++;
+          }
+        } catch (fileError) {
+          console.error('Error processing file:', file.name, fileError);
+          errorCount++;
+        }
+      }
+      
+      // Show summary toast
+      if (successCount > 0) {
+        toast({
+          title: "Upload Complete",
+          description: `${successCount} file(s) uploaded successfully${errorCount > 0 ? `, ${errorCount} failed` : ''}.`,
+        });
+      }
+      
+      if (errorCount > 0 && successCount === 0) {
+        toast({
+          title: "Upload Failed",
+          description: "All uploads failed. Verify preset name and that it's unsigned.",
+          variant: "destructive",
+        });
+      }
+      
+      // Refresh gallery items if any succeeded
+      if (successCount > 0) {
+        try {
+          const galleryData = await getGalleryItems();
+          setGalleryItems(galleryData);
+        } catch (refreshError) {
+          console.warn('Failed to refresh gallery:', refreshError);
+        }
+      }
+      
+    } catch (error) {
+      toast({
+        title: "Upload Error",
+        description: "An error occurred while uploading files.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+      // Reset the input
+      event.target.value = '';
+    }
+  };
+
+  const handleDeleteGalleryItem = async (itemId: string) => {
+    try {
+      const result = await deleteGalleryItem(itemId);
+      
+      if (result.success) {
+        // Remove from local state
+        setGalleryItems(galleryItems.filter(item => item.id !== itemId));
+        toast({
+          title: "Item Deleted",
+          description: "Gallery item has been removed.",
+        });
+      } else {
+        toast({
+          title: "Delete Failed",
+          description: result.error || "Failed to delete gallery item.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Delete Error",
+        description: "An error occurred while deleting the item.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -285,10 +436,12 @@ export default function AdminDashboard() {
           {/* Charts and Analytics */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="registrations">Registrations</TabsTrigger>
                 <TabsTrigger value="events">Events</TabsTrigger>
+                <TabsTrigger value="teams">Teams</TabsTrigger>
+                <TabsTrigger value="gallery">Gallery</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
               </TabsList>
 
@@ -686,6 +839,246 @@ export default function AdminDashboard() {
                         <div className="text-sm text-muted-foreground">Draft</div>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="teams" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {teamStats.map((team) => (
+                    <Card key={team.team_name} className={`border-2 ${
+                      team.team_name === 'red' ? 'border-red-200 bg-red-50' :
+                      team.team_name === 'blue' ? 'border-blue-200 bg-blue-50' :
+                      team.team_name === 'green' ? 'border-green-200 bg-green-50' :
+                      'border-yellow-200 bg-yellow-50'
+                    }`}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className={`text-lg capitalize ${
+                          team.team_name === 'red' ? 'text-red-700' :
+                          team.team_name === 'blue' ? 'text-blue-700' :
+                          team.team_name === 'green' ? 'text-green-700' :
+                          'text-yellow-700'
+                        }`}>
+                          Team {team.team_name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Members</span>
+                          <Badge variant="secondary" className={
+                            team.team_name === 'red' ? 'bg-red-100 text-red-800' :
+                            team.team_name === 'blue' ? 'bg-blue-100 text-blue-800' :
+                            team.team_name === 'green' ? 'bg-green-100 text-green-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }>
+                            {team.member_count}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Recent Joins</span>
+                          <span className="text-sm font-medium">
+                            {team.recent_members.length}
+                          </span>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full mt-2"
+                          onClick={() => {
+                            // TODO: Open team member management modal
+                            console.log(`Manage ${team.team_name} team`);
+                          }}
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          Manage Team
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Team Management Overview */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Management Overview</CardTitle>
+                    <CardDescription>
+                      Manage team memberships and monitor team activity
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {teamStats.reduce((total, team) => total + team.member_count, 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Members</div>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {teamStats.reduce((total, team) => total + team.recent_members.length, 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">Recent Joins (7 days)</div>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {teamStats.length}
+                        </div>
+                        <div className="text-sm text-gray-600">Active Teams</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-4">
+                      <Button variant="outline" size="sm">
+                        <Download className="h-3 w-3 mr-1" />
+                        Export Team Data
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Refresh Statistics
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Settings className="h-3 w-3 mr-1" />
+                        Team Settings
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Team Activity */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Team Activity</CardTitle>
+                    <CardDescription>
+                      Latest team joins and switches across all teams
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {teamStats.some(team => team.recent_members.length > 0) ? (
+                        <div className="space-y-2">
+                          {teamStats.flatMap(team => 
+                            team.recent_members.map(member => (
+                              <div key={`${team.team_name}-${member.full_name}`} className="flex items-center justify-between p-2 border rounded">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-3 h-3 rounded-full ${
+                                    team.team_name === 'red' ? 'bg-red-500' :
+                                    team.team_name === 'blue' ? 'bg-blue-500' :
+                                    team.team_name === 'green' ? 'bg-green-500' :
+                                    'bg-yellow-500'
+                                  }`}></div>
+                                  <span className="font-medium">{member.full_name}</span>
+                                  <span className="text-sm text-gray-500">joined Team {team.team_name}</span>
+                                </div>
+                                <span className="text-xs text-gray-400">
+                                  {new Date(member.join_date).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 text-center py-4">
+                          No recent team activity
+                        </div>
+                      )}
+                      <Button variant="outline" className="w-full">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Full Activity Log
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="gallery" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Gallery Management</CardTitle>
+                    <CardDescription>
+                      Upload and manage gallery images and videos
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Upload Section */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                      <div className="text-center">
+                        <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="mt-4">
+                          <Label htmlFor="gallery-upload" className="cursor-pointer">
+                            <span className="mt-2 block text-sm font-medium text-gray-900">
+                              Upload Gallery Images
+                            </span>
+                            <span className="mt-1 block text-sm text-gray-500">
+                              PNG, JPG, GIF up to 10MB
+                            </span>
+                          </Label>
+                          <Input
+                            id="gallery-upload"
+                            type="file"
+                            multiple
+                            accept="image/*,video/*"
+                            className="hidden"
+                            onChange={handleFileUpload}
+                            disabled={uploadingImage}
+                          />
+                        </div>
+                        <div className="mt-4">
+                          <Button
+                            onClick={() => document.getElementById('gallery-upload')?.click()}
+                            disabled={uploadingImage}
+                            className="inline-flex items-center"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {uploadingImage ? 'Uploading...' : 'Select Files'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gallery Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {galleryItems.map((item) => (
+                        <Card key={item.id} className="overflow-hidden">
+                          <div className="relative aspect-square">
+                            <img
+                              src={item.url}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute top-2 right-2 flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleDeleteGalleryItem(item.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="absolute bottom-2 left-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {item.type}
+                              </Badge>
+                            </div>
+                          </div>
+                          <CardContent className="p-3">
+                            <h4 className="font-medium text-sm truncate">{item.title}</h4>
+                            <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(item.uploaded_at).toLocaleDateString()}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {galleryItems.length === 0 && (
+                      <div className="text-center py-8">
+                        <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No gallery items</h3>
+                        <p className="mt-1 text-sm text-gray-500">Get started by uploading images or videos.</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

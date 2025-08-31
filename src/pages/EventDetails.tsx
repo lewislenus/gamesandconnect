@@ -314,11 +314,33 @@ export default function EventDetails() {
             <div className="text-right">
               <div className="text-3xl font-bold text-primary mb-2">{event.price}</div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: event.title,
+                        text: event.description,
+                        url: window.location.href
+                      });
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      // You could add a toast here
+                    }
+                  }}
+                >
                   <Share2 className="h-4 w-4 mr-1" />
                   Share
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    // Could implement favorite functionality here
+                    console.log('Favorited event:', event.id);
+                  }}
+                >
                   <Heart className="h-4 w-4" />
                 </Button>
               </div>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Users, Trophy, Calendar, MapPin, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { JoinTeamButton } from '@/components/JoinTeamButton';
 
 export default function TeamRed() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -127,9 +128,16 @@ export default function TeamRed() {
                 </div>
               </div>
               
-              <Button size="lg" className="bg-white text-red-600 hover:bg-white/90 font-semibold px-8 py-4">
+              <JoinTeamButton
+                teamName="red"
+                teamDisplayName="Team Red"
+                teamColor="red"
+                teamMotto="Fire & Passion"
+                size="lg"
+                className="bg-white text-red-600 hover:bg-white/90 font-semibold px-8 py-4"
+              >
                 Join Team Red
-              </Button>
+              </JoinTeamButton>
             </div>
             
             <div className="relative">
@@ -346,12 +354,16 @@ export default function TeamRed() {
             with genuine friendship. The fire starts with you!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
+            <JoinTeamButton
+              teamName="red"
+              teamDisplayName="Team Red"
+              teamColor="red"
+              teamMotto="Fire & Passion"
+              size="lg"
               className="bg-white text-red-600 hover:bg-white/90 font-semibold px-8 py-4"
             >
               Join Team Red Now
-            </Button>
+            </JoinTeamButton>
             <Link to="/events">
               <Button 
                 variant="outline" 

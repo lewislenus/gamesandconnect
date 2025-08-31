@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Trophy, Target, ArrowRight } from 'lucide-react';
+import { JoinTeamButton } from '@/components/JoinTeamButton';
 
 export default function Teams() {
   const teams = [
@@ -181,9 +182,16 @@ export default function Teams() {
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </Link>
-                    <Button className="bg-white text-black hover:bg-white/90 font-semibold">
+                    <JoinTeamButton
+                      teamName={team.color as 'red' | 'blue' | 'green' | 'yellow'}
+                      teamDisplayName={team.name}
+                      teamColor={team.color}
+                      teamMotto={team.motto}
+                      variant="default"
+                      className="bg-white text-black hover:bg-white/90 font-semibold"
+                    >
                       Join Team
-                    </Button>
+                    </JoinTeamButton>
                   </div>
                 </CardContent>
               </Card>

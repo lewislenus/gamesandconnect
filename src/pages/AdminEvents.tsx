@@ -13,16 +13,13 @@ import AdminNavigation from '@/components/AdminNavigation';
 interface EventForm {
   title: string;
   description: string;
-  long_description: string;
   date: string; // display string; raw yyyy-mm-dd kept separately
   time_range: string;
   location: string;
   category: 'trivia' | 'gaming' | 'travel' | 'social' | '';
   price: string;
-  image_url: string; // emoji or url fallback
-  status: 'open' | 'filling-fast' | 'almost-full' | 'full' | '';
-  organizer: string;
-  capacity: number | null; // new required DB column
+  organizer: string; // direct field in DB
+  capacity: number | null; // required DB column
   requirements: string[];
   includes: string[];
   agenda: { time: string; activity: string }[];
@@ -31,14 +28,11 @@ interface EventForm {
 const initialForm: EventForm = {
   title: '',
   description: '',
-  long_description: '',
   date: '',
   time_range: '',
   location: '',
   category: 'social',
   price: '',
-  image_url: '🎮',
-  status: 'open',
   organizer: '',
   capacity: null,
   requirements: [''],
@@ -58,13 +52,14 @@ interface AdminEventRow {
   price?: string | null;
   capacity?: number | null;
   created_at?: string | null;
-  additional_info?: { long_description?: string; organizer?: string; status?: string } | null;
+  organizer?: string | null; // direct field in DB
+  category?: string | null;
+  additional_info?: any | null; // Can be null since we don't use it anymore
   gallery?: any;
-  event_schedule?: string | null; // raw text version from DB
+  "event schedule"?: string | null; // raw text version from DB (note: column has space)
   agenda?: Array<{ time: string; activity: string }> | null; // parsed from event_schedule for UI convenience
   requirements?: string[] | null;
   includes?: string[] | null;
-  category?: string | null;
 }
 
 export default function AdminEvents() {
@@ -99,11 +94,13 @@ export default function AdminEvents() {
         price: ev.price ?? null,
         capacity: ev.capacity ?? null,
         created_at: ev.created_at ?? null,
+        organizer: ev.organizer ?? null, // direct field from DB
+        category: ev.category ?? null,
         additional_info: ev.additional_info ?? null,
         gallery: ev.gallery ?? null,
-        event_schedule: ev.event_schedule ?? null,
-        agenda: ev.event_schedule
-          ? String(ev.event_schedule)
+        "event schedule": ev["event schedule"] ?? null,
+        agenda: ev["event schedule"]
+          ? String(ev["event schedule"])
               .split(/\n+/)
               .map((line: string) => line.trim())
               .filter(Boolean)
@@ -114,7 +111,6 @@ export default function AdminEvents() {
           : null,
         requirements: Array.isArray(ev.requirements) ? ev.requirements : null,
         includes: Array.isArray(ev.includes) ? ev.includes : null,
-        category: ev.category ?? null,
       }));
       setEvents(normalized);
     } catch (err: any) {
@@ -255,7 +251,7 @@ export default function AdminEvents() {
       const cleanIncludes = form.includes.filter(inc => inc.trim() !== '');
       const cleanAgenda = form.agenda.filter(item => item.time.trim() !== '' && item.activity.trim() !== '');
 
-      // Build payload matching DB columns
+      // Build payload matching DB columns exactly
       const eventData = {
         title: form.title,
         description: form.description,
@@ -264,18 +260,14 @@ export default function AdminEvents() {
         location: form.location,
         category: form.category || null,
         price: form.price || null,
-        image_url: flyerUrl || form.image_url,
-  capacity: form.capacity!,
-        requirements: cleanRequirements,
-        includes: cleanIncludes,
-  // Convert agenda array to a newline separated string for event_schedule column
-  event_schedule: cleanAgenda.map(a => `${a.time} - ${a.activity}`).join('\n') || null,
-        additional_info: {
-          long_description: form.long_description,
-          organizer: form.organizer,
-          status: form.status,
-        },
-        // gallery can be added later if you wire a multi-image uploader
+        image_url: flyerUrl || null, // Only from flyer upload, no manual emoji input
+        capacity: form.capacity!,
+        organizer: form.organizer || null, // direct field in DB
+        requirements: cleanRequirements.length > 0 ? cleanRequirements : null, // JSONB array
+        includes: cleanIncludes.length > 0 ? cleanIncludes : null, // JSONB array
+        "event schedule": cleanAgenda.map(a => `${a.time} - ${a.activity}`).join('\n') || null, // text field with space
+        additional_info: null, // No additional info needed since we removed long_description
+        gallery: null, // Can be added later if you wire a multi-image uploader
       };
 
       const { error } = await supabase
@@ -356,16 +348,6 @@ export default function AdminEvents() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="long_description">Long Description</Label>
-                <Textarea
-                  id="long_description"
-                  value={form.long_description}
-                  onChange={(e) => setForm({ ...form, long_description: e.target.value })}
-                  rows={5}
-                />
-              </div>
-
               {/* Event Details */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -429,36 +411,12 @@ export default function AdminEvents() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={form.status} onValueChange={(value: any) => setForm({ ...form, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="filling-fast">Filling Fast</SelectItem>
-                      <SelectItem value="almost-full">Almost Full</SelectItem>
-                      <SelectItem value="full">Full</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
                   <Label htmlFor="price">Price</Label>
                   <Input
                     id="price"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
                     placeholder="₵25 or Free"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="image">Emoji</Label>
-                  <Input
-                    id="image"
-                    value={form.image_url}
-                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                    placeholder="🎮"
                     required
                   />
                 </div>
@@ -636,7 +594,7 @@ export default function AdminEvents() {
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {ev.category && <span className="mr-2">Category: {ev.category}</span>}
-                          {ev.additional_info?.status && <span className="mr-2">Status: {ev.additional_info.status}</span>}
+                          {ev.organizer && <span className="mr-2">Organizer: {ev.organizer}</span>}
                           {typeof ev.capacity === 'number' && <span className="mr-2">Capacity: {ev.capacity}</span>}
                         </div>
                       </div>

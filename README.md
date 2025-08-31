@@ -114,3 +114,26 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Environment Variables (Cloudinary / Email)
+
+Copy `.env.example` to `.env` (or `.env.local`) and fill in:
+
+```env
+VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=your_general_unsigned_preset   # used for event flyers
+VITE_CLOUDINARY_GALLERY_UPLOAD_PRESET=your_gallery_unsigned_preset  # optional override just for gallery (falls back to general preset)
+VITE_CLOUDINARY_FOLDER=flyers
+
+# EmailJS
+VITE_EMAILJS_SERVICE_ID=...
+VITE_EMAILJS_TEMPLATE_ID=template_event_registration
+VITE_EMAILJS_PUBLIC_KEY=...
+```
+
+Gallery uploader will attempt these presets (in order):
+1. `VITE_CLOUDINARY_GALLERY_UPLOAD_PRESET` (if set)
+2. `VITE_CLOUDINARY_UPLOAD_PRESET`
+3. `website-upload`, `gallery-upload`, `ml_default`, `unsigned_preset`, `unsigned`
+
+At least one unsigned preset must exist in your Cloudinary dashboard and allow the resource type(s) you upload (image / video). Ensure the preset allows the folder `gallery/` (or leave folder blank for all) and unsigned uploads.

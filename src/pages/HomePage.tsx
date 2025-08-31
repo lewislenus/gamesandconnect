@@ -161,13 +161,15 @@ export default function HomePage() {
                     Join the Journey
                   </Button>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="border-blue-400/50 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400 px-8 py-3 rounded-full"
-                >
-                  Explore Events
-                </Button>
+                <Link to="/events">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="bg-transparent border-blue-400/50 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400 px-8 py-3 rounded-full"
+                  >
+                    Explore Events
+                  </Button>
+                </Link>
               </div>
             </div>
 
