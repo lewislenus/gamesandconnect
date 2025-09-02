@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getEventById, sampleEvents, Event } from '@/lib/api';
 import { motion } from 'framer-motion';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
+import SEO from '@/components/SEO';
 
 export default function EventDetails() {
   const { id } = useParams();
@@ -252,12 +253,26 @@ export default function EventDetails() {
   }
 
   return (
-    <motion.div 
-      className="min-h-screen bg-background"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-    >
+    <>
+      <SEO 
+        title={event.title}
+        description={event.long_description || event.description}
+        keywords={`${event.title}, ${event.category}, gaming event Ghana, ${event.location}, event registration`}
+        image={event.image_url || event.flyer?.url}
+        url={`https://gamesandconnect.netlify.app/events/${event.id}`}
+        type="article"
+        article={{
+          publishedTime: event.created_at,
+          author: event.organizer || 'Games & Connect',
+          tags: [event.category || 'gaming', 'events', 'Ghana']
+        }}
+      />
+      <motion.div 
+        className="min-h-screen bg-background"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
       {/* Header with Back Button */}
       <motion.div 
         className="bg-muted/30 border-b"
@@ -702,5 +717,6 @@ export default function EventDetails() {
         />
       )}
     </motion.div>
+    </>
   );
 }

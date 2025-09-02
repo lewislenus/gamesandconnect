@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { getEvents, sampleEvents, Event } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import SEO from '@/components/SEO';
 
 export default function Events() {
   const { toast } = useToast();
@@ -133,12 +134,19 @@ export default function Events() {
   const pastEvents = filteredEvents.filter(event => getComparableDate(event) < now);
 
   return (
-    <motion.div 
-      className="min-h-screen bg-background"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <>
+      <SEO 
+        title="Gaming Events"
+        description="Discover exciting gaming events in Ghana! Join FIFA tournaments, trivia nights, community adventures, and more. Register now for upcoming events in Accra and beyond."
+        keywords="gaming events Ghana, FIFA tournament Accra, trivia night, gaming meetups, esports events, gaming tournaments, video game events, community gaming Ghana"
+        url="https://gamesandconnect.netlify.app/events"
+      />
+      <motion.div 
+        className="min-h-screen bg-background"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
       {/* Header */}
       <section className="bg-gradient-to-r from-primary to-accent py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -795,5 +803,6 @@ export default function Events() {
         </div>
       </footer>
     </motion.div>
+    </>
   );
 }

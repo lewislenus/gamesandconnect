@@ -1,3 +1,7 @@
+User-agent: *
+Allow: /
+
+# Specific bot permissions
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +14,21 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+User-agent: LinkedInBot
 Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# Disallow admin areas for security
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_redirects
+Disallow: /netlify.toml
+
+# Sitemap location
+Sitemap: https://gamesandconnect.netlify.app/sitemap.xml
+
+# Crawl delay to be respectful
+Crawl-delay: 1
