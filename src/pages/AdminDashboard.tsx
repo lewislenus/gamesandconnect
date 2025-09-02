@@ -9,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { getDashboardStats, getRecentActivity, getTopEvents, getEventRegistrations, updateRegistrationStatus, TopEvent } from '@/lib/admin-api';
-import { getTeamStats, TeamStats } from '@/lib/team-api';
+import { getTeamStats, getTeamMembers, TeamStats, TeamMembership } from '@/lib/team-api';
 import { getGalleryItems, uploadToCloudinary, saveGalleryItem, deleteGalleryItem, GalleryItem } from '@/lib/gallery-api';
 import { Skeleton } from "@/components/ui/skeleton";
 import AdminNavigation from '@/components/AdminNavigation';
+import EmailTestPanel from '@/components/EmailTestPanel';
 import { 
   Users, 
   Calendar, 
@@ -92,6 +94,12 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Team member management state
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMembership[]>([]);
+  const [loadingTeamMembers, setLoadingTeamMembers] = useState(false);
+  const [teamMemberModalOpen, setTeamMemberModalOpen] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -133,6 +141,33 @@ export default function AdminDashboard() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTeamMembers = async (teamName: string) => {
+    setLoadingTeamMembers(true);
+    try {
+      const result = await getTeamMembers(teamName);
+      if (result.success && result.data) {
+        setTeamMembers(result.data);
+        setSelectedTeam(teamName);
+        setTeamMemberModalOpen(true);
+      } else {
+        toast({
+          title: "Error Loading Team Members",
+          description: result.error || "Failed to load team members.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load team members:', error);
+      toast({
+        title: "Error Loading Team Members",
+        description: "Failed to load team members. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTeamMembers(false);
     }
   };
 
@@ -442,7 +477,7 @@ export default function AdminDashboard() {
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="teams">Teams</TabsTrigger>
                 <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="email">Email</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
@@ -884,13 +919,11 @@ export default function AdminDashboard() {
                           variant="outline" 
                           size="sm" 
                           className="w-full mt-2"
-                          onClick={() => {
-                            // TODO: Open team member management modal
-                            console.log(`Manage ${team.team_name} team`);
-                          }}
+                          onClick={() => loadTeamMembers(team.team_name)}
+                          disabled={loadingTeamMembers}
                         >
                           <Users className="h-3 w-3 mr-1" />
-                          Manage Team
+                          {loadingTeamMembers && selectedTeam === team.team_name ? 'Loading...' : 'View Members'}
                         </Button>
                       </CardContent>
                     </Card>
@@ -1083,65 +1116,8 @@ export default function AdminDashboard() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="users" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Management</CardTitle>
-                    <CardDescription>
-                      Manage community members and registrations
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Link to="/admin/users">
-                        <Button className="w-full justify-start">
-                          <Users className="h-4 w-4 mr-2" />
-                          Manage Users
-                        </Button>
-                      </Link>
-                      <Link to="/admin/registrations">
-                        <Button variant="outline" className="w-full justify-start">
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          View Registrations
-                        </Button>
-                      </Link>
-                      <Link to="/admin/feedback">
-                        <Button variant="outline" className="w-full justify-start">
-                          <Star className="h-4 w-4 mr-2" />
-                          User Feedback
-                        </Button>
-                      </Link>
-                      <Link to="/admin/analytics/users">
-                        <Button variant="outline" className="w-full justify-start">
-                          <PieChart className="h-4 w-4 mr-2" />
-                          User Analytics
-                        </Button>
-                      </Link>
-                    </div>
-
-                    {/* User Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                      <div className="text-center p-4 bg-muted/20 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {stats?.totalUsers || 0}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Total Users</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/20 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">
-                          {Math.round((stats?.totalRegistrations || 0) / (stats?.totalUsers || 1) * 10) / 10}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Avg. Events/User</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/20 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-600">
-                          {stats?.pendingRegistrations || 0}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Pending</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="email" className="space-y-6">
+                <EmailTestPanel />
               </TabsContent>
             </Tabs>
           </div>
@@ -1291,6 +1267,109 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Team Members Modal */}
+      <Dialog open={teamMemberModalOpen} onOpenChange={setTeamMemberModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold capitalize">
+              Team {selectedTeam} Members
+            </DialogTitle>
+            <DialogDescription>
+              View and manage members of Team {selectedTeam}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {teamMembers.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Members Yet</h3>
+                <p className="text-gray-500">This team doesn't have any members yet.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">
+                    {teamMembers.length} Member{teamMembers.length !== 1 ? 's' : ''}
+                  </h3>
+                  <Badge 
+                    variant="secondary" 
+                    className={`${
+                      selectedTeam === 'red' ? 'bg-red-100 text-red-800' :
+                      selectedTeam === 'blue' ? 'bg-blue-100 text-blue-800' :
+                      selectedTeam === 'green' ? 'bg-green-100 text-green-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
+                    Team {selectedTeam}
+                  </Badge>
+                </div>
+                
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Join Date</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {teamMembers.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">
+                            {member.full_name}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {member.user_email}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {member.phone_number || 'Not provided'}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {new Date(member.join_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={member.is_active ? "default" : "secondary"}
+                              className={member.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
+                            >
+                              {member.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                <div className="flex justify-between items-center pt-4">
+                  <div className="text-sm text-gray-500">
+                    Total: {teamMembers.length} member{teamMembers.length !== 1 ? 's' : ''}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Download className="h-3 w-3 mr-1" />
+                      Export List
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Mail className="h-3 w-3 mr-1" />
+                      Email Team
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

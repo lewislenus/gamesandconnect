@@ -7,12 +7,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Mail, Send, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import EmailService, { EmailNotificationData } from '@/lib/emailjs';
+import EmailService, { EmailNotificationData, AdminNotificationData } from '@/lib/emailjs';
 
 export default function EmailTestPanel() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [adminTestLoading, setAdminTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [adminTestResult, setAdminTestResult] = useState<string | null>(null);
   
   const [testData, setTestData] = useState({
     to_name: 'Test User',
@@ -22,6 +24,14 @@ export default function EmailTestPanel() {
     event_time: '2:00 PM',
     event_location: 'Games & Connect Community Center',
     event_price: '₵25',
+  });
+
+  const [adminTestData, setAdminTestData] = useState({
+    admin_email: '',
+    participant_name: 'John Doe',
+    participant_email: 'john@example.com',
+    participant_phone: '+233501234567',
+    participant_location: 'Accra, Ghana',
   });
 
   const configStatus = EmailService.getConfigurationStatus();
@@ -100,6 +110,78 @@ export default function EmailTestPanel() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendAdminTestEmail = async () => {
+    if (!adminTestData.admin_email.trim()) {
+      toast({
+        title: "Missing Admin Email",
+        description: "Please enter an admin email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!EmailService.isValidEmail(adminTestData.admin_email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid admin email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAdminTestLoading(true);
+    setAdminTestResult(null);
+    
+    try {
+      const confirmationNumber = EmailService.generateConfirmationNumber();
+      
+      const adminNotificationData: AdminNotificationData = {
+        event_title: testData.event_title,
+        event_date: testData.event_date,
+        event_time: testData.event_time,
+        event_location: testData.event_location,
+        participant_name: adminTestData.participant_name,
+        participant_email: adminTestData.participant_email,
+        participant_phone: adminTestData.participant_phone,
+        participant_location: adminTestData.participant_location,
+        number_of_participants: 2,
+        special_requests: 'Test notification - please ignore',
+        confirmation_number: confirmationNumber,
+        registration_date: new Date().toLocaleDateString('en-GB'),
+        event_id: 'test-event-' + Date.now(),
+        status: 'confirmed',
+        admin_email: adminTestData.admin_email,
+      };
+
+      const success = await EmailService.sendAdminNotification(adminNotificationData);
+      
+      if (success) {
+        setAdminTestResult('success');
+        toast({
+          title: "Admin Test Email Sent!",
+          description: `Admin notification sent successfully to ${adminTestData.admin_email}`,
+        });
+      } else {
+        setAdminTestResult('failed');
+        toast({
+          title: "Admin Email Failed",
+          description: "Failed to send admin test email. Check console for details.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Admin test email error:', error);
+      setAdminTestResult('error');
+      toast({
+        title: "Admin Email Error",
+        description: "An error occurred while sending the admin test email.",
+        variant: "destructive",
+      });
+    } finally {
+      setAdminTestLoading(false);
     }
   };
 
@@ -268,6 +350,106 @@ export default function EmailTestPanel() {
         </CardContent>
       </Card>
 
+      {/* Admin Notification Test */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            <CardTitle>Admin Notification Test</CardTitle>
+          </div>
+          <CardDescription>
+            Test admin notifications sent when users register for events
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="admin_email">Admin Email</Label>
+                <Input
+                  id="admin_email"
+                  type="email"
+                  value={adminTestData.admin_email}
+                  onChange={(e) => setAdminTestData(prev => ({ ...prev, admin_email: e.target.value }))}
+                  placeholder="admin@gamesandconnect.com"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="participant_name">Participant Name</Label>
+                <Input
+                  id="participant_name"
+                  value={adminTestData.participant_name}
+                  onChange={(e) => setAdminTestData(prev => ({ ...prev, participant_name: e.target.value }))}
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="participant_email">Participant Email</Label>
+                <Input
+                  id="participant_email"
+                  type="email"
+                  value={adminTestData.participant_email}
+                  onChange={(e) => setAdminTestData(prev => ({ ...prev, participant_email: e.target.value }))}
+                  placeholder="john@example.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="participant_phone">Participant Phone</Label>
+                <Input
+                  id="participant_phone"
+                  value={adminTestData.participant_phone}
+                  onChange={(e) => setAdminTestData(prev => ({ ...prev, participant_phone: e.target.value }))}
+                  placeholder="+233501234567"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="participant_location">Participant Location</Label>
+              <Input
+                id="participant_location"
+                value={adminTestData.participant_location}
+                onChange={(e) => setAdminTestData(prev => ({ ...prev, participant_location: e.target.value }))}
+                placeholder="Accra, Ghana"
+              />
+            </div>
+
+            <Button 
+              onClick={sendAdminTestEmail} 
+              disabled={adminTestLoading || !configStatus.configured}
+              className="w-full"
+              variant="outline"
+            >
+              {adminTestLoading ? 'Sending Admin Notification...' : 'Send Admin Test Email'}
+            </Button>
+
+            {adminTestResult && (
+              <Alert className={adminTestResult === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+                <div className="flex items-center gap-2">
+                  {adminTestResult === 'success' ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  )}
+                  <AlertDescription className={adminTestResult === 'success' ? 'text-green-700' : 'text-red-700'}>
+                    {adminTestResult === 'success' 
+                      ? `Admin notification sent successfully to ${adminTestData.admin_email}! Check your inbox.`
+                      : 'Failed to send admin notification. Check the console for error details.'
+                    }
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Quick Setup Checklist</CardTitle>
@@ -288,7 +470,11 @@ export default function EmailTestPanel() {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>Email templates created</span>
+              <span>User confirmation template created</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>Admin notification template created</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -296,7 +482,7 @@ export default function EmailTestPanel() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            See EMAILJS_SETUP.md for detailed setup instructions.
+            See EMAILJS_SETUP_GUIDE.md for detailed setup instructions including admin notification template.
           </p>
         </CardContent>
       </Card>

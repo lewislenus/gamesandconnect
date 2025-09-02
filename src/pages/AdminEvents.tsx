@@ -10,6 +10,31 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import AdminNavigation from '@/components/AdminNavigation';
 
+// Helper functions for time formatting
+function formatSingleTime(timeStr: string): string {
+  return timeStr.replace(/([ap])m/i, ' $1M').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function formatTimeRange(rangeStr: string): string {
+  const parts = rangeStr.split(/\s*[-–—]\s*/);
+  if (parts.length === 2) {
+    let startTime = parts[0].trim();
+    let endTime = parts[1].trim();
+    
+    startTime = formatSingleTime(startTime);
+    endTime = formatSingleTime(endTime);
+    
+    if (!/[ap]m/i.test(endTime) && /[ap]m/i.test(startTime)) {
+      const ampm = startTime.match(/([ap]m)/i)?.[1] || 'AM';
+      endTime = endTime + ' ' + ampm.toUpperCase();
+    }
+    
+    return `${startTime} - ${endTime}`;
+  }
+  
+  return formatSingleTime(rangeStr);
+}
+
 interface EventForm {
   title: string;
   description: string;
@@ -56,7 +81,7 @@ interface AdminEventRow {
   category?: string | null;
   additional_info?: any | null; // Can be null since we don't use it anymore
   gallery?: any;
-  "event schedule"?: string | null; // raw text version from DB (note: column has space)
+  event_schedule?: string | null; // normalized snake_case column
   agenda?: Array<{ time: string; activity: string }> | null; // parsed from event_schedule for UI convenience
   requirements?: string[] | null;
   includes?: string[] | null;
@@ -65,6 +90,7 @@ interface AdminEventRow {
 export default function AdminEvents() {
   const [form, setForm] = useState<EventForm>(initialForm);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<number | string | null>(null);
   const [flyerFile, setFlyerFile] = useState<File | null>(null);
   const [flyerPreview, setFlyerPreview] = useState<string | null>(null);
   const [uploadingFlyer, setUploadingFlyer] = useState(false);
@@ -98,16 +124,25 @@ export default function AdminEvents() {
         category: ev.category ?? null,
         additional_info: ev.additional_info ?? null,
         gallery: ev.gallery ?? null,
-        "event schedule": ev["event schedule"] ?? null,
-        agenda: ev["event schedule"]
-          ? String(ev["event schedule"])
+        event_schedule: ev.event_schedule ?? ev["event schedule"] ?? null,
+        agenda: (ev.event_schedule ?? ev["event schedule"]) 
+          ? String(ev.event_schedule ?? ev["event schedule"]) 
               .split(/\n+/)
               .map((line: string) => line.trim())
               .filter(Boolean)
               .map((line: string) => {
-                const [time, ...rest] = line.split(/\s+-\s+/); // split on ' - '
-                return { time: time || '', activity: rest.join(' - ') || '' };
-              })
+                // Enhanced time/activity parsing: supports formats
+                const rangeMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?\s*-\s*\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s+[-–—]\s+|\s+)(.+)$/i);
+                if (rangeMatch) return { time: formatTimeRange(rangeMatch[1]), activity: rangeMatch[2].trim() };
+                
+                const dashMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)\s*[-–—:]\s*(.+)$/i);
+                if (dashMatch) return { time: formatSingleTime(dashMatch[1]), activity: dashMatch[2].trim() };
+                
+                const startMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)\s+(.+)$/i);
+                if (startMatch) return { time: formatSingleTime(startMatch[1]), activity: startMatch[2].trim() };
+                
+                return { time: '', activity: line };
+              }).filter(item => item.activity)
           : null,
         requirements: Array.isArray(ev.requirements) ? ev.requirements : null,
         includes: Array.isArray(ev.includes) ? ev.includes : null,
@@ -252,7 +287,7 @@ export default function AdminEvents() {
       const cleanAgenda = form.agenda.filter(item => item.time.trim() !== '' && item.activity.trim() !== '');
 
       // Build payload matching DB columns exactly
-      const eventData = {
+      const eventData: Record<string, any> = {
         title: form.title,
         description: form.description,
         date: dateRaw, // yyyy-mm-dd for date column
@@ -265,27 +300,50 @@ export default function AdminEvents() {
         organizer: form.organizer || null, // direct field in DB
         requirements: cleanRequirements.length > 0 ? cleanRequirements : null, // JSONB array
         includes: cleanIncludes.length > 0 ? cleanIncludes : null, // JSONB array
-        "event schedule": cleanAgenda.map(a => `${a.time} - ${a.activity}`).join('\n') || null, // text field with space
+        // Prefer new snake_case column if it exists; fallback to legacy spaced name handled by DB if needed
+        event_schedule: cleanAgenda.length ? cleanAgenda.map(a => `${a.time} - ${a.activity}`).join('\n') : null,
         additional_info: null, // No additional info needed since we removed long_description
         gallery: null, // Can be added later if you wire a multi-image uploader
       };
 
-      const { error } = await supabase
-        .from('events')
-        .insert([eventData as any]);
+      // If editing, include id to trigger update via upsert
+      if (editingId) eventData.id = editingId;
 
-      if (error) {
-        console.error('[Supabase insert error]', error);
-        throw error;
+      let dbOpError: any = null;
+      if (editingId) {
+        const { error } = await supabase.from('events').upsert([eventData as any]);
+        dbOpError = error;
+      } else {
+        const { error } = await supabase.from('events').insert([eventData as any]);
+        dbOpError = error;
       }
 
-      toast({ title: 'Success!', description: 'Event added successfully.' });
+      if (dbOpError) {
+        // Retry with legacy column name if rename not applied
+        if (String(dbOpError.message || '').includes('event_schedule')) {
+          eventData['event schedule'] = eventData.event_schedule;
+          delete eventData.event_schedule;
+          if (editingId) {
+            const { error: retryErr } = await supabase.from('events').upsert([eventData as any]);
+            if (retryErr) throw retryErr;
+          } else {
+            const { error: retryErr } = await supabase.from('events').insert([eventData as any]);
+            if (retryErr) throw retryErr;
+          }
+        } else {
+          console.error('[Supabase save error]', dbOpError);
+          throw dbOpError;
+        }
+      }
+
+      toast({ title: 'Success!', description: editingId ? 'Event updated successfully.' : 'Event added successfully.' });
 
       // Reset form
       setForm(initialForm);
       setFlyerFile(null);
       setFlyerPreview(null);
       setDateRaw('');
+      setEditingId(null);
       // Refresh list
       fetchEvents();
     } catch (error: any) {
@@ -308,12 +366,19 @@ export default function AdminEvents() {
         
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Add New Event</CardTitle>
+            <CardTitle>{editingId ? 'Edit Event' : 'Add New Event'}</CardTitle>
             <CardDescription>
-              Create a new event for the Games & Connect website
+              {editingId ? 'Update the event details below' : 'Create a new event for the Games & Connect website'}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {editingId && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Editing Mode:</strong> You are currently editing an existing event. Make your changes and click "Update Event" to save.
+                </p>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -547,10 +612,28 @@ export default function AdminEvents() {
                 )}
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full">
-                {(loading || uploadingFlyer) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {uploadingFlyer ? 'Uploading Flyer...' : 'Add Event'}
-              </Button>
+              <div className="flex gap-4">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {(loading || uploadingFlyer) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {uploadingFlyer ? 'Uploading Flyer...' : (editingId ? 'Update Event' : 'Add Event')}
+                </Button>
+                {editingId && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setForm(initialForm);
+                      setFlyerFile(null);
+                      setFlyerPreview(null);
+                      setDateRaw('');
+                      setEditingId(null);
+                    }}
+                    className="px-8"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -600,6 +683,36 @@ export default function AdminEvents() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        console.log('Edit button clicked for event:', ev);
+                        // Load event into form for editing
+                        const displayDate = new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                        console.log('Parsed display date:', displayDate, 'from raw date:', ev.date);
+                        
+                        const formData = {
+                          title: ev.title || '',
+                          description: ev.description || '',
+                          date: displayDate,
+                          time_range: ev.time_range || '',
+                          location: ev.location || '',
+                          category: (ev.category as any) || 'social',
+                          price: ev.price || '',
+                          organizer: ev.organizer || '',
+                          capacity: ev.capacity ?? null,
+                          requirements: ev.requirements && ev.requirements.length ? [...ev.requirements] : [''],
+                          includes: ev.includes && ev.includes.length ? [...ev.includes] : [''],
+                          agenda: ev.agenda && ev.agenda.length ? [...ev.agenda] : [{ time: '', activity: '' }]
+                        };
+                        
+                        console.log('Setting form data:', formData);
+                        setForm(formData);
+                        setDateRaw(ev.date);
+                        setEditingId(ev.id);
+                        console.log('Edit state set - editingId:', ev.id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}>
+                        Edit
+                      </Button>
                       <Button variant="destructive" size="sm" onClick={() => handleDelete(ev.id)}>
                         <Trash2 className="h-4 w-4 mr-1" /> Delete
                       </Button>

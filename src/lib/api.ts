@@ -1,5 +1,34 @@
 import { supabase } from '../integrations/supabase/client';
 
+// Helper functions for time formatting
+function formatSingleTime(timeStr: string): string {
+  // Convert "6:00 AM" or "6:00am" to "6:00 AM"
+  return timeStr.replace(/([ap])m/i, ' $1M').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function formatTimeRange(rangeStr: string): string {
+  // Convert "6:00 AM - 6:30 AM" or "6:00-6:30" to "6:00 AM - 6:30 AM"
+  const parts = rangeStr.split(/\s*[-–—]\s*/);
+  if (parts.length === 2) {
+    let startTime = parts[0].trim();
+    let endTime = parts[1].trim();
+    
+    // Format individual times
+    startTime = formatSingleTime(startTime);
+    endTime = formatSingleTime(endTime);
+    
+    // If end time doesn't have AM/PM, inherit from start time
+    if (!/[ap]m/i.test(endTime) && /[ap]m/i.test(startTime)) {
+      const ampm = startTime.match(/([ap]m)/i)?.[1] || 'AM';
+      endTime = endTime + ' ' + ampm.toUpperCase();
+    }
+    
+    return `${startTime} - ${endTime}`;
+  }
+  
+  return formatSingleTime(rangeStr);
+}
+
 export interface Event {
   id: string; // bigint in DB, but we'll convert to string for consistency
   title: string;
@@ -337,6 +366,51 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     const row: any = data;
     const info = (row.additional_info || {}) as { long_description?: string; organizer?: string; status?: string };
 
+    // Normalize/parse event schedule which in DB may exist as:
+    //  - JSONB array column "agenda" (legacy)
+    //  - JSONB or text column "event_schedule"
+    //  - Text column named "event schedule" (with space) containing newline separated items
+    let parsedSchedule: Array<{ time: string; activity: string }> = [];
+    try {
+      const rawSchedule: any = (
+        row.event_schedule !== undefined ? row.event_schedule :
+        row.agenda !== undefined ? row.agenda :
+        (row['event schedule'] !== undefined ? row['event schedule'] : undefined)
+      );
+
+      if (Array.isArray(rawSchedule)) {
+        parsedSchedule = rawSchedule as Array<{ time: string; activity: string }>;
+      } else if (typeof rawSchedule === 'string' && rawSchedule.trim() !== '') {
+        const lines = rawSchedule.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        parsedSchedule = lines.map((line, idx) => {
+          // Enhanced pattern matching for various time formats
+          // Pattern 1: Range format "6:00 AM - 6:30 AM Activity" or "6:00-6:30 Activity"
+          const rangeMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?\s*[-–—]\s*\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+          if (rangeMatch) {
+            return {
+              time: formatTimeRange(rangeMatch[1]),
+              activity: rangeMatch[2].trim()
+            };
+          }
+          
+          // Pattern 2: Single time "6:00 AM - Activity" or "6:00 AM Activity"
+          const singleMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+          if (singleMatch) {
+            return {
+              time: formatSingleTime(singleMatch[1]),
+              activity: singleMatch[2].trim()
+            };
+          }
+          
+          // Pattern 3: Activity only (no time found)
+          return { time: '', activity: line };
+        }).filter(item => item.activity); // Remove empty activities
+      }
+    } catch (e) {
+      console.warn('Failed to parse event schedule text:', e);
+      parsedSchedule = [];
+    }
+
     // Transform database data to match Event interface
     const transformedEvent = {
       ...row,
@@ -348,10 +422,8 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       status: info.status || 'open',
       requirements: Array.isArray(row.requirements) ? (row.requirements as string[]) : [],
       includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
-      agenda: Array.isArray(row.event_schedule) ? (row.event_schedule as Array<{ time: string; activity: string }>) : 
-              Array.isArray(row.agenda) ? (row.agenda as Array<{ time: string; activity: string }>) : [],
-      event_schedule: Array.isArray(row.event_schedule) ? (row.event_schedule as Array<{ time: string; activity: string }>) : 
-                     Array.isArray(row.agenda) ? (row.agenda as Array<{ time: string; activity: string }>) : [],
+      agenda: parsedSchedule,
+      event_schedule: parsedSchedule,
       flyer: undefined, // Not in DB schema
       gallery: Array.isArray((row as any).gallery) ? ((row as any).gallery as string[]) : [],
       created_at: row.created_at || new Date().toISOString(),

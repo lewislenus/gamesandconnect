@@ -22,6 +22,7 @@ interface MediaItem {
   thumbnail?: string;
   title: string;
   description: string;
+  is_youtube?: boolean;
 }
 
 // Convert GalleryItem to MediaItem format
@@ -32,6 +33,7 @@ const convertGalleryItemToMediaItem = (item: GalleryItem): MediaItem => ({
   thumbnail: item.thumbnail,
   title: item.title,
   description: item.description,
+  is_youtube: item.url.includes('youtube.com/embed/') || item.title.includes('[YouTube]'),
 });
 
 export default function Gallery() {
@@ -90,6 +92,15 @@ export default function Gallery() {
   };
 
   const handleDownload = (item: MediaItem) => {
+    if (item.is_youtube) {
+      // For YouTube videos, open the original YouTube URL
+      const youtubeId = item.url.split('/embed/')[1]?.split('?')[0];
+      if (youtubeId) {
+        window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank');
+      }
+      return;
+    }
+    
     const link = document.createElement('a');
     link.href = item.url;
     link.download = `${item.title.replace(/\s+/g, '-').toLowerCase()}.${item.type === 'video' ? 'mp4' : 'jpg'}`;
@@ -234,14 +245,25 @@ export default function Gallery() {
             
             <div className="aspect-video max-h-[80vh] overflow-hidden">
               {modalItem.type === 'video' ? (
-                <video
-                  controls
-                  className="w-full h-full object-contain"
-                  poster={modalItem.thumbnail}
-                >
-                  <source src={modalItem.url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                modalItem.is_youtube ? (
+                  <iframe
+                    src={modalItem.url}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={modalItem.title}
+                  />
+                ) : (
+                  <video
+                    controls
+                    className="w-full h-full object-contain"
+                    poster={modalItem.thumbnail}
+                  >
+                    <source src={modalItem.url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                )
               ) : (
                 <img
                   src={modalItem.url}
@@ -259,7 +281,7 @@ export default function Gallery() {
                   onClick={() => handleDownload(modalItem)}
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Download
+                  {modalItem.is_youtube ? 'View on YouTube' : 'Download'}
                 </Button>
                 <Button
                   variant="outline"
@@ -318,23 +340,36 @@ function GalleryContent({
       <Card className="overflow-hidden">
         <div className="relative aspect-video bg-black">
           {currentItem.type === 'video' ? (
-            <div className="relative w-full h-full">
-              <img
-                src={currentItem.thumbnail || currentItem.url}
-                alt={currentItem.title}
-                className="w-full h-full object-cover"
+            currentItem.is_youtube ? (
+              // Display YouTube videos directly in the main area
+              <iframe
+                src={currentItem.url}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={currentItem.title}
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <Button
-                  size="lg"
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-                  onClick={() => onItemClick(currentItem)}
-                >
-                  <Play className="h-8 w-8 mr-2" />
-                  Play Video
-                </Button>
+            ) : (
+              // For regular videos, show thumbnail with play button
+              <div className="relative w-full h-full">
+                <img
+                  src={currentItem.thumbnail || currentItem.url}
+                  alt={currentItem.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <Button
+                    size="lg"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                    onClick={() => onItemClick(currentItem)}
+                  >
+                    <Play className="h-8 w-8 mr-2" />
+                    Play Video
+                  </Button>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <img
               src={currentItem.url}
@@ -369,8 +404,14 @@ function GalleryContent({
         </div>
         
         <CardContent className="p-6">
-          <div className="text-sm text-muted-foreground text-center">
-            {currentIndex + 1} of {items.length}
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-semibold">{currentItem.title}</h3>
+            {currentItem.description && (
+              <p className="text-sm text-muted-foreground">{currentItem.description}</p>
+            )}
+            <div className="text-sm text-muted-foreground">
+              {currentIndex + 1} of {items.length}
+            </div>
           </div>
         </CardContent>
       </Card>

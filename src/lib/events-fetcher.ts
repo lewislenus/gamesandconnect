@@ -1,6 +1,31 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 
+// Helper functions for time formatting
+function formatSingleTime(timeStr: string): string {
+  return timeStr.replace(/([ap])m/i, ' $1M').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function formatTimeRange(rangeStr: string): string {
+  const parts = rangeStr.split(/\s*[-–—]\s*/);
+  if (parts.length === 2) {
+    let startTime = parts[0].trim();
+    let endTime = parts[1].trim();
+    
+    startTime = formatSingleTime(startTime);
+    endTime = formatSingleTime(endTime);
+    
+    if (!/[ap]m/i.test(endTime) && /[ap]m/i.test(startTime)) {
+      const ampm = startTime.match(/([ap]m)/i)?.[1] || 'AM';
+      endTime = endTime + ' ' + ampm.toUpperCase();
+    }
+    
+    return `${startTime} - ${endTime}`;
+  }
+  
+  return formatSingleTime(rangeStr);
+}
+
 // Enhanced Event type with better typing
 export interface EventData extends Tables<'events'> {
   image_url?: string; // Add image_url field
@@ -156,29 +181,61 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
     // Transform and enhance the data
     const enhancedEvents: EventData[] = data.map((event) => {
       const registrationCount = (event.total_spots || 0) - (event.spots || 0);
-      
+
+      // Parse schedule similarly to getEventById
+      let parsedSchedule: Array<{ time: string; activity: string }> = [];
+      try {
+        const rawSchedule: any = (
+          (event as any).event_schedule !== undefined ? (event as any).event_schedule :
+          event.agenda !== undefined ? event.agenda :
+          (event as any)['event schedule'] !== undefined ? (event as any)['event schedule'] : undefined
+        );
+        if (Array.isArray(rawSchedule)) {
+          parsedSchedule = rawSchedule as Array<{ time: string; activity: string }>;
+        } else if (typeof rawSchedule === 'string' && rawSchedule.trim() !== '') {
+          const lines = rawSchedule.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          parsedSchedule = lines.map((line) => {
+            // Enhanced pattern matching for various time formats
+            const rangeMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?\s*[-–—]\s*\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+            if (rangeMatch) {
+              return {
+                time: formatTimeRange(rangeMatch[1]),
+                activity: rangeMatch[2].trim()
+              };
+            }
+            
+            const singleMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+            if (singleMatch) {
+              return {
+                time: formatSingleTime(singleMatch[1]),
+                activity: singleMatch[2].trim()
+              };
+            }
+            
+            return { time: '', activity: line };
+          }).filter(item => item.activity);
+        }
+      } catch (e) {
+        console.warn('Failed to parse schedule for event id', event.id, e);
+      }
+
       return {
         ...event,
         formatted_date: formatEventDate(event.date),
-        formatted_time: event.time || 'Time TBA',
+        formatted_time: (event as any).time || 'Time TBA',
         registration_count: registrationCount,
         availability_status: getAvailabilityStatus(event.spots || 0, event.total_spots || 0),
-        // Ensure arrays are properly parsed
-        requirements: Array.isArray(event.requirements) 
+        requirements: Array.isArray(event.requirements)
           ? event.requirements as string[]
-          : (typeof event.requirements === 'string' 
-              ? JSON.parse(event.requirements) 
+          : (typeof event.requirements === 'string'
+              ? JSON.parse(event.requirements)
               : []),
         includes: Array.isArray(event.includes)
           ? event.includes as string[]
           : (typeof event.includes === 'string'
               ? JSON.parse(event.includes)
               : []),
-        agenda: Array.isArray(event.agenda)
-          ? event.agenda as Array<{ time: string; activity: string }>
-          : (typeof event.agenda === 'string'
-              ? JSON.parse(event.agenda)
-              : [])
+        agenda: parsedSchedule
       };
     });
 

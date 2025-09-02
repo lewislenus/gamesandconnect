@@ -7,6 +7,7 @@ const EMAILJS_CONFIG = {
   PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'your_public_key_here',
   REMINDER_TEMPLATE: import.meta.env.VITE_EMAILJS_REMINDER_TEMPLATE || 'template_event_reminder',
   CANCELLATION_TEMPLATE: import.meta.env.VITE_EMAILJS_CANCELLATION_TEMPLATE || 'template_event_cancellation',
+  ADMIN_NOTIFICATION_TEMPLATE: import.meta.env.VITE_EMAILJS_ADMIN_NOTIFICATION_TEMPLATE || 'template_admin_notification',
 };
 
 // Initialize EmailJS
@@ -26,6 +27,24 @@ export interface EmailNotificationData {
   event_requirements?: string[];
   event_includes?: string[];
   organizer_email?: string;
+}
+
+export interface AdminNotificationData {
+  event_title: string;
+  event_date: string;
+  event_time: string;
+  event_location: string;
+  participant_name: string;
+  participant_email: string;
+  participant_phone: string;
+  participant_location: string;
+  number_of_participants: number;
+  special_requests?: string;
+  confirmation_number: string;
+  registration_date: string;
+  event_id: string;
+  status: string;
+  admin_email: string;
 }
 
 export class EmailService {
@@ -169,6 +188,65 @@ export class EmailService {
       return response.status === 200;
     } catch (error) {
       console.error('Failed to send cancellation email:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send admin notification when someone registers for an event
+   */
+  static async sendAdminNotification(data: AdminNotificationData): Promise<boolean> {
+    try {
+      // Check if EmailJS is configured
+      const configStatus = EmailService.getConfigurationStatus();
+      if (!configStatus.configured) {
+        console.warn('EmailJS not configured for admin notifications:', configStatus.message);
+        return false;
+      }
+
+      const templateParams = {
+        // Admin details
+        to_email: data.admin_email,
+        to_name: 'Admin',
+        
+        // Event details
+        event_title: data.event_title,
+        event_date: data.event_date,
+        event_time: data.event_time,
+        event_location: data.event_location,
+        event_id: data.event_id,
+        
+        // Participant details
+        participant_name: data.participant_name,
+        participant_email: data.participant_email,
+        participant_phone: data.participant_phone || 'Not provided',
+        participant_location: data.participant_location,
+        number_of_participants: data.number_of_participants,
+        special_requests: data.special_requests || 'None',
+        
+        // Registration details
+        confirmation_number: data.confirmation_number,
+        registration_date: data.registration_date,
+        status: data.status,
+        
+        // Additional info
+        notification_time: new Date().toLocaleString(),
+        dashboard_link: `${window.location.origin}/admin/registrations`,
+        
+        // Reply to participant
+        reply_to: data.participant_email,
+      };
+
+      const response = await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.ADMIN_NOTIFICATION_TEMPLATE,
+        templateParams
+      );
+
+      console.log('Admin notification email sent successfully:', response);
+      return response.status === 200;
+    } catch (error) {
+      console.error('Failed to send admin notification email:', error);
       return false;
     }
   }

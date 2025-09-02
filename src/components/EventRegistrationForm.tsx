@@ -11,7 +11,7 @@ import { CheckCircle, Users, Phone, Mail, MapPin, MessageSquare, CreditCard, Che
 import { useToast } from '@/hooks/use-toast';
 import { Event, registerForEvent } from '@/lib/api';
 import { supabase } from '@/integrations/supabase/client';
-import EmailService, { EmailNotificationData } from '@/lib/emailjs';
+import EmailService, { EmailNotificationData, AdminNotificationData } from '@/lib/emailjs';
 
 interface EventRegistrationFormProps {
   event: Event;
@@ -110,6 +110,49 @@ const sendConfirmationEmail = async (
     }
   } catch (error) {
     console.error('Error sending confirmation email:', error);
+    return false;
+  }
+};
+
+// Send admin notification function
+const sendAdminNotification = async (
+  formData: RegistrationData,
+  event: Event,
+  confirmationNumber: string,
+  isWaitlist: boolean = false
+): Promise<boolean> => {
+  try {
+    const adminEmail = import.meta.env.VITE_ORGANIZER_EMAIL || 'events@gamesandconnect.com';
+    
+    const adminNotificationData: AdminNotificationData = {
+      event_title: event.title,
+      event_date: event.date,
+      event_time: event.time || 'Time TBA',
+      event_location: event.location || 'Location TBA',
+      participant_name: formData.fullName,
+      participant_email: formData.email,
+      participant_phone: formData.phone,
+      participant_location: formData.location,
+      number_of_participants: formData.numberOfParticipants,
+      special_requests: formData.specialRequests,
+      confirmation_number: confirmationNumber,
+      registration_date: new Date().toLocaleDateString('en-GB'),
+      event_id: event.id,
+      status: isWaitlist ? 'waitlist' : 'confirmed',
+      admin_email: adminEmail,
+    };
+
+    const notificationSent = await EmailService.sendAdminNotification(adminNotificationData);
+    
+    if (notificationSent) {
+      console.log('Admin notification sent successfully');
+      return true;
+    } else {
+      console.warn('Failed to send admin notification');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error sending admin notification:', error);
     return false;
   }
 };
@@ -322,6 +365,14 @@ export default function EventRegistrationForm({
           result.isWaitlist
         );
 
+        // Send admin notification
+        const adminNotificationSent = await sendAdminNotification(
+          formData,
+          event,
+          confirmationNumber,
+          result.isWaitlist
+        );
+
         // Update registration result with confirmation number
         registrationResult.registration_id = confirmationNumber;
 
@@ -332,12 +383,12 @@ export default function EventRegistrationForm({
         if (emailSent) {
           toast({
             title: result.isWaitlist ? "Added to Waitlist" : "Registration Successful!",
-            description: `${registrationResult.message}. Confirmation email sent to ${formData.email}`,
+            description: `${registrationResult.message}. Confirmation email sent to ${formData.email}${adminNotificationSent ? '. Admin notified.' : ''}`,
           });
         } else {
           toast({
             title: result.isWaitlist ? "Added to Waitlist" : "Registration Successful!",
-            description: `${registrationResult.message}. Note: Confirmation email could not be sent.`,
+            description: `${registrationResult.message}. Note: Confirmation email could not be sent.${adminNotificationSent ? ' Admin notified.' : ''}`,
             variant: "default",
           });
         }

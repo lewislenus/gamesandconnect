@@ -10,6 +10,7 @@ export interface GalleryItem {
   uploaded_at: string;
   uploaded_by: string;
   is_active: boolean;
+  is_youtube?: boolean;
 }
 
 export interface UploadResult {
