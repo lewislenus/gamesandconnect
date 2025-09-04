@@ -15,55 +15,25 @@
 - 🎫 **Event Registration**: Streamlined registration process with confirmation numbers
 - 💳 **Payment Integration**: MTN Mobile Money payment information included
 
-## Project info
-
-**URL**: https://lovable.dev/projects/f3cd09ae-3df3-473c-87b1-b24e7ce0a1c5
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/f3cd09ae-3df3-473c-87b1-b24e7ce0a1c5) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## How to set up the project locally
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 Follow these steps:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Step 1: Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Step 2: Navigate to the project directory
+cd games-and-connect
 
-# Step 3: Install the necessary dependencies.
+# Step 3: Install the necessary dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Start the development server with auto-reloading and an instant preview
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## What technologies are used for this project?
 
@@ -105,15 +75,22 @@ This project includes a comprehensive email notification system for event regist
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/f3cd09ae-3df3-473c-87b1-b24e7ce0a1c5) and click on Share -> Publish.
+This project can be deployed to various platforms:
 
-## Can I connect a custom domain to my Lovable project?
+### Netlify (Recommended)
+1. Build the project: `npm run build`
+2. Deploy the `dist` folder to Netlify
+3. Configure environment variables in Netlify dashboard
+4. See `NETLIFY_DEPLOYMENT.md` for detailed instructions
 
-Yes, you can!
+### Other Platforms
+- **Vercel**: Connect your GitHub repository and deploy automatically
+- **GitHub Pages**: Use GitHub Actions to build and deploy
+- **Firebase Hosting**: Use Firebase CLI to deploy the built project
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Custom Domain Setup
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+You can connect a custom domain to your deployed project through your hosting provider's domain settings.
 
 ## Environment Variables (Cloudinary / Email)
 
