@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,17 +25,7 @@ export default function EventsDisplay() {
   const [connectionStatus, setConnectionStatus] = useState<{ connected: boolean; error?: string } | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadEvents();
-    checkConnection();
-  }, []);
-
-  const checkConnection = async () => {
-    const status = await checkDatabaseConnection();
-    setConnectionStatus(status);
-  };
-
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     try {
       const fetchResult = await fetchEventsFromSupabase();
@@ -68,6 +58,16 @@ export default function EventsDisplay() {
     } finally {
       setLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    loadEvents();
+    checkConnection();
+  }, [loadEvents]);
+
+  const checkConnection = async () => {
+    const status = await checkDatabaseConnection();
+    setConnectionStatus(status);
   };
 
   const getStatusBadge = (status: string) => {
@@ -336,7 +336,7 @@ export default function EventsDisplay() {
                         <div>
                           <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
                           <CardDescription className="text-sm mt-1">
-                            ID: {event.id.substring(0, 8)}...
+                            ID: {String(event.id).padStart(4, '0')}
                           </CardDescription>
                         </div>
                       </div>
@@ -355,7 +355,7 @@ export default function EventsDisplay() {
                     <>
                       <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
                       <CardDescription className="text-sm mt-1">
-                        ID: {event.id.substring(0, 8)}...
+                        ID: {String(event.id).padStart(4, '0')}
                       </CardDescription>
                       <div className="flex flex-wrap gap-2 mt-3">
                         {getStatusBadge(event.status)}

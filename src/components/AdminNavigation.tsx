@@ -8,7 +8,8 @@ import {
   UserPlus, 
   BarChart3, 
   Settings,
-  Home
+  Home,
+  BookOpen
 } from 'lucide-react';
 
 export default function AdminNavigation() {
@@ -38,6 +39,12 @@ export default function AdminNavigation() {
       label: 'Registrations',
       icon: UserPlus,
       description: 'Manage participant registrations'
+    },
+    {
+      href: '/admin/blog',
+      label: 'Blog',
+      icon: BookOpen,
+      description: 'Manage blog posts and content'
     }
   ];
 

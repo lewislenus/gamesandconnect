@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,11 +101,7 @@ export default function AdminDashboard() {
   const [loadingTeamMembers, setLoadingTeamMembers] = useState(false);
   const [teamMemberModalOpen, setTeamMemberModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const [statsData, activityData, eventsData, registrationsData, teamStatsData, galleryData] = await Promise.all([
@@ -129,7 +125,7 @@ export default function AdminDashboard() {
       }
       
       // Check if we got sample/demo data
-  if (registrationsData.length > 0 && String(registrationsData[0].id).startsWith('sample-')) {
+      if (registrationsData.length > 0 && String(registrationsData[0].id).startsWith('sample-')) {
         setIsDemoMode(true);
       }
     } catch (error) {
@@ -142,7 +138,11 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const loadTeamMembers = async (teamName: string) => {
     setLoadingTeamMembers(true);

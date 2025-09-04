@@ -8,6 +8,7 @@ import { JoinTeamButton } from '@/components/JoinTeamButton';
 
 export default function TeamRed() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   const teamImages = [
     "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915399/_MG_2393_cv5xbp.jpg",
@@ -21,56 +22,56 @@ export default function TeamRed() {
       role: "Team Captain",
       avatar: "👨🏿‍💼",
       quote: "Leading Team Red means bringing out the fire in everyone. We don't just compete - we dominate!",
-      joinedDate: "Jan 2024",
-      achievements: ["FIFA Champion 2024", "Team Builder Award", "Community Leader"]
+      joinedDate: "Jan 2025",
+      achievements: ["Beach Games Champion", "Team Builder Award", "Community Leader"]
     },
     {
       name: "Ama K.",
       role: "Strategy Coordinator",
       avatar: "👩🏿‍💻",
       quote: "Every victory starts with a plan. I make sure Team Red is always three steps ahead.",
-      joinedDate: "Mar 2024",
-      achievements: ["Strategic Mind Award", "Tournament Organizer", "Gaming Mentor"]
+      joinedDate: "Mar 2025",
+      achievements: ["Strategic Mind Award", "Beach Volleyball MVP", "Event Organizer"]
     },
     {
       name: "Kojo M.",
-      role: "Gaming Champion",
+      role: "Beach Sports Champion",
       avatar: "👨🏿‍🎮",
       quote: "When the pressure is on, Team Red rises. That's the power of passion and preparation.",
-      joinedDate: "Feb 2024",
-      achievements: ["Call of Duty Champion", "MVP Award 2024", "Team Spirit Award"]
+      joinedDate: "Feb 2025",
+      achievements: ["Beach Soccer Star", "Water Sports Expert", "Team Spirit Award"]
     },
     {
       name: "Efua S.",
       role: "Community Ambassador",
       avatar: "👩🏿‍🎨",
       quote: "Team Red isn't just about winning - we're about lifting each other up and having fun together.",
-      joinedDate: "Apr 2024",
-      achievements: ["Community Builder", "Event Coordinator", "Friendship Champion"]
+      joinedDate: "Apr 2025",
+      achievements: ["Community Builder", "Travel Coordinator", "Friendship Champion"]
     }
   ];
 
   const recentEvents = [
     {
-      name: "FIFA Tournament Final",
-      date: "Dec 15, 2024",
-      location: "East Legon Center",
-      result: "1st Place",
-      participants: "Team Red Squad"
+      name: "Beach Day & Games Tournament",
+      date: "Jul 8, 2025",
+      location: "Labadi Beach, Accra",
+      result: "1st Place - Champions",
+      participants: "Team Red Warriors"
     },
     {
-      name: "Community Beach Day",
-      date: "Nov 28, 2024", 
-      location: "Laboma Beach",
-      result: "Team Building",
-      participants: "25 Members"
-    },
-    {
-      name: "Gaming Marathon",
-      date: "Nov 10, 2024",
-      location: "Accra Mall",
+      name: "Cape Coast Historical Challenge",
+      date: "Sep 14, 2025",
+      location: "Cape Coast, Central Region",
       result: "2nd Place",
-      participants: "Red Warriors"
+      participants: "32 Red Members"
+    },
+    {
+      name: "Aburi Gardens Adventure",
+      date: "Jul 22, 2025",
+      location: "Aburi Botanical Gardens",
+      result: "Participation",
+      participants: "20 Team Members"
     }
   ];
 
@@ -115,11 +116,11 @@ export default function TeamRed() {
               
               <div className="grid grid-cols-3 gap-6 mb-8">
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">485</div>
+                  <div className="text-3xl font-bold text-white mb-1">35</div>
                   <div className="text-white/80 text-sm">Members</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">127</div>
+                  <div className="text-3xl font-bold text-white mb-1">1</div>
                   <div className="text-white/80 text-sm">Wins</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
@@ -143,11 +144,33 @@ export default function TeamRed() {
             <div className="relative">
               {/* Team Photo Carousel */}
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                <img 
-                  src={teamImages[currentImageIndex]}
-                  alt="Team Red Members"
-                  className="w-full h-96 object-cover"
-                />
+                {imageErrors.has(currentImageIndex) ? (
+                  // Show fallback design for failed images
+                  <div className="w-full h-96 bg-gradient-to-br from-red-500 to-red-600 flex flex-col items-center justify-center text-white">
+                    <div className="text-6xl mb-4">🔥</div>
+                    <div className="text-2xl font-bold mb-2">Team Red</div>
+                    <div className="text-lg opacity-80">Fiery Passion</div>
+                  </div>
+                ) : (
+                  <img 
+                    src={teamImages[currentImageIndex]}
+                    alt="Team Red Members"
+                    className="w-full h-96 object-cover"
+                    onError={() => {
+                      console.log('Image failed to load, showing fallback');
+                      setImageErrors(prev => new Set([...prev, currentImageIndex]));
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', teamImages[currentImageIndex]);
+                      // Remove from error set if it loads successfully
+                      setImageErrors(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(currentImageIndex);
+                        return newSet;
+                      });
+                    }}
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 
                 {/* Navigation Buttons */}

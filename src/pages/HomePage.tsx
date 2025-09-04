@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { getEvents, Event } from '@/lib/api';
 import { useTypingEffect } from '@/hooks/use-typing-effect';
 import { getEventUrl } from '@/lib/utils';
+import { RecentWinners } from '@/components/RecentWinners';
 
 export default function HomePage() {
   const [nextEvent, setNextEvent] = useState<Event | null>(null);
@@ -153,7 +154,7 @@ export default function HomePage() {
                 Join a growing community of young Ghanaians making memories through fun, adventure, and connection. Experience our exciting events, travel adventures, and build lasting friendships.
               </p>
               
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <Link to="/events">
                   <Button 
                     size="lg" 
@@ -169,6 +170,15 @@ export default function HomePage() {
                     className="bg-transparent border-blue-400/50 text-blue-200 hover:bg-blue-500/10 hover:border-blue-400 px-8 py-3 rounded-full"
                   >
                     Explore Events
+                  </Button>
+                </Link>
+                <Link to="/blog">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="bg-transparent border-purple-400/50 text-purple-200 hover:bg-purple-500/10 hover:border-purple-400 px-8 py-3 rounded-full"
+                  >
+                    Read Our Blog
                   </Button>
                 </Link>
               </div>
@@ -853,6 +863,13 @@ export default function HomePage() {
           </motion.div>
         </div>
       </motion.section>
+
+      {/* Recent Winners Section */}
+      <section className="py-20 bg-muted/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RecentWinners limit={3} showImages={true} />
+        </div>
+      </section>
 
       {/* Teams Section */}
       <section className="py-20 bg-background">

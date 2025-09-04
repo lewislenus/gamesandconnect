@@ -7,71 +7,70 @@ import { ArrowLeft, Users, Trophy, Calendar, MapPin, Quote, ChevronLeft, Chevron
 
 export default function TeamYellow() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   const teamImages = [
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915378/_MG_1828_k5cwrw.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915378/_MG_1814_jmfzwz.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915379/_MG_1839_tuxcjm.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915376/_MG_1784_vkfxoc.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915386/_MG_1999_btpwql.jpg"
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915401/_MG_2185_rqpdrv.jpg",
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915388/_MG_2118_gi8okx.jpg",
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915393/_MG_2181_oohsbh.jpg"
   ];
 
   const teamMembers = [
     {
       name: "Ama S.",
-      role: "Team Captain",
+      role: "Team Captain & History Expert",
       avatar: "👩🏿‍🎨",
       quote: "Team Yellow is pure sunshine - we bring joy, creativity, and boundless energy to everything we do!",
-      joinedDate: "Jan 2024",
-      achievements: ["Joy Bringer", "Creative Leader", "Energy Booster"]
+      joinedDate: "Jan 2025",
+      achievements: ["Cape Coast Quiz Champion", "History Master", "Cultural Knowledge Leader"]
     },
     {
       name: "Kwame L.",
-      role: "Entertainment Director",
+      role: "Historical Research Director",
       avatar: "👨🏿‍🎭",
       quote: "Life's too short to be serious all the time. Team Yellow knows how to have fun while winning!",
-      joinedDate: "Feb 2024",
-      achievements: ["Fun Master", "Event Creator", "Mood Lifter"]
+      joinedDate: "Feb 2025",
+      achievements: ["Quiz Tournament Winner", "Cultural Heritage Expert", "Strategic Thinker"]
     },
     {
       name: "Akua J.",
-      role: "Creative Coordinator",
+      role: "Knowledge Coordinator",
       avatar: "👩🏿‍🎨",
       quote: "Creativity flows like sunshine in Team Yellow. We turn every challenge into an opportunity for fun!",
-      joinedDate: "Mar 2024",
-      achievements: ["Creative Genius", "Art Director", "Innovation Spark"]
+      joinedDate: "Mar 2025",
+      achievements: ["Historical Quiz Victor", "Educational Leader", "Memory Champion"]
     },
     {
       name: "Kojo B.",
-      role: "Community Energizer",
+      role: "Community Historian",
       avatar: "👨🏿‍🚀",
       quote: "Team Yellow is infectious energy! Once you experience our vibe, you'll never want to leave.",
-      joinedDate: "Apr 2024",
-      achievements: ["Energy Catalyst", "Community Builder", "Happiness Ambassador"]
+      joinedDate: "Apr 2025",
+      achievements: ["Cape Coast Champion", "Cultural Ambassador", "Knowledge Catalyst"]
     }
   ];
 
   const recentEvents = [
     {
-      name: "Sunshine Gaming Festival",
-      date: "Dec 20, 2024",
-      location: "Kwame Nkrumah Park",
-      result: "Best Atmosphere",
-      participants: "Golden Squad"
+      name: "Cape Coast Historical Quiz Challenge",
+      date: "Sep 14, 2025",
+      location: "Cape Coast, Central Region",
+      result: "1st Place - Champions",
+      participants: "Golden Knowledge Squad"
     },
     {
-      name: "Creative Arts Challenge",
-      date: "Dec 1, 2024",
-      location: "National Theatre",
-      result: "1st Place",
-      participants: "40 Members"
+      name: "Beach Day Games",
+      date: "Jul 8, 2025",
+      location: "Labadi Beach, Accra",
+      result: "2nd Place",
+      participants: "24 Sunshine Members"
     },
     {
-      name: "Joy & Games Tournament",
-      date: "Nov 18, 2024",
-      location: "Achimota Park",
-      result: "People's Choice",
-      participants: "Sunshine Crew"
+      name: "Akosombo Adventure Games",
+      date: "Jun 15, 2025",
+      location: "Akosombo, Eastern Region",
+      result: "Participation",
+      participants: "28 Team Members"
     }
   ];
 
@@ -137,11 +136,33 @@ export default function TeamYellow() {
             <div className="relative">
               {/* Team Photo Carousel */}
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                <img 
-                  src={teamImages[currentImageIndex]}
-                  alt="Team Yellow Members"
-                  className="w-full h-96 object-cover"
-                />
+                {imageErrors.has(currentImageIndex) ? (
+                  // Show fallback SVG for failed images
+                  <div className="w-full h-96 bg-gradient-to-br from-yellow-400 to-yellow-500 flex flex-col items-center justify-center text-white">
+                    <div className="text-6xl mb-4">☀️</div>
+                    <div className="text-2xl font-bold mb-2">Team Yellow</div>
+                    <div className="text-lg opacity-80">Sunshine Energy</div>
+                  </div>
+                ) : (
+                  <img 
+                    src={teamImages[currentImageIndex]}
+                    alt="Team Yellow Members"
+                    className="w-full h-96 object-cover"
+                    onError={() => {
+                      console.log('Image failed to load, showing fallback');
+                      setImageErrors(prev => new Set([...prev, currentImageIndex]));
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', teamImages[currentImageIndex]);
+                      // Remove from error set if it loads successfully
+                      setImageErrors(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(currentImageIndex);
+                        return newSet;
+                      });
+                    }}
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 
                 {/* Navigation Buttons */}

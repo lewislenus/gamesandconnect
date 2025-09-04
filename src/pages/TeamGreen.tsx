@@ -7,6 +7,7 @@ import { ArrowLeft, Users, Trophy, Calendar, MapPin, Quote, ChevronLeft, Chevron
 
 export default function TeamGreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   const teamImages = [
     "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915398/_MG_2403_hknyss.jpg",
@@ -22,56 +23,56 @@ export default function TeamGreen() {
       role: "Team Captain",
       avatar: "👩🏿‍🌾",
       quote: "Team Green is about growth, balance, and sustainability. We build lasting connections and meaningful victories.",
-      joinedDate: "Feb 2024",
-      achievements: ["Eco Champion", "Community Builder", "Strategic Leader"]
+      joinedDate: "Feb 2025",
+      achievements: ["Aburi Gardens Champion", "Nature Expert", "Strategic Leader"]
     },
     {
       name: "Kofi T.",
-      role: "Sustainability Coordinator",
+      role: "Nature Guide",
       avatar: "👨🏿‍🔬",
       quote: "Every game we play, every event we attend, we think about the bigger picture and our impact.",
-      joinedDate: "Jan 2024",
-      achievements: ["Green Initiative Leader", "Event Organizer", "Mentor"]
+      joinedDate: "Jan 2025",
+      achievements: ["Botanical Gardens Expert", "Hiking Leader", "Environmental Mentor"]
     },
     {
       name: "Adwoa M.",
-      role: "Growth Strategist",
+      role: "Adventure Strategist",
       avatar: "👩🏿‍💼",
       quote: "True strength comes from helping others grow. Team Green nurtures talent and builds futures.",
-      joinedDate: "Mar 2024",
-      achievements: ["Talent Developer", "Team Builder", "Gaming Coach"]
+      joinedDate: "Mar 2025",
+      achievements: ["Trail Navigator", "Team Builder", "Nature Activity Coach"]
     },
     {
       name: "Kwaku S.",
       role: "Community Liaison",
       avatar: "👨🏿‍🎨",
       quote: "Balance is key to everything we do. We compete hard but always maintain our harmony and friendship.",
-      joinedDate: "Apr 2024",
-      achievements: ["Harmony Keeper", "Event Coordinator", "Cultural Ambassador"]
+      joinedDate: "Apr 2025",
+      achievements: ["Harmony Keeper", "Garden Tour Coordinator", "Cultural Ambassador"]
     }
   ];
 
   const recentEvents = [
     {
-      name: "Eco-Gaming Tournament",
-      date: "Dec 8, 2024",
-      location: "Nature Park Accra",
-      result: "Sustainability Award",
-      participants: "Green Squad"
+      name: "Aburi Gardens Adventure Challenge",
+      date: "Jul 22, 2025",
+      location: "Aburi Botanical Gardens",
+      result: "1st Place - Champions",
+      participants: "Green Nature Squad"
     },
     {
-      name: "Community Garden Project",
-      date: "Nov 20, 2024",
-      location: "East Legon Community",
-      result: "Project Complete",
-      participants: "30 Members"
+      name: "Akosombo Games Day",
+      date: "Jun 15, 2025",
+      location: "Akosombo, Eastern Region",
+      result: "1st Place - Champions",
+      participants: "28 Green Members"
     },
     {
-      name: "Strategy Gaming Night",
-      date: "Nov 5, 2024",
-      location: "Osu Cultural Center",
-      result: "1st Place",
-      participants: "Green Minds"
+      name: "Cape Coast Historical Games",
+      date: "Sep 14, 2025",
+      location: "Cape Coast, Central Region",
+      result: "Participation",
+      participants: "32 Team Members"
     }
   ];
 
@@ -137,11 +138,33 @@ export default function TeamGreen() {
             <div className="relative">
               {/* Team Photo Carousel */}
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                <img 
-                  src={teamImages[currentImageIndex]}
-                  alt="Team Green Members"
-                  className="w-full h-96 object-cover"
-                />
+                {imageErrors.has(currentImageIndex) ? (
+                  // Show fallback design for failed images
+                  <div className="w-full h-96 bg-gradient-to-br from-green-500 to-green-600 flex flex-col items-center justify-center text-white">
+                    <div className="text-6xl mb-4">🌱</div>
+                    <div className="text-2xl font-bold mb-2">Team Green</div>
+                    <div className="text-lg opacity-80">Nature's Balance</div>
+                  </div>
+                ) : (
+                  <img 
+                    src={teamImages[currentImageIndex]}
+                    alt="Team Green Members"
+                    className="w-full h-96 object-cover"
+                    onError={() => {
+                      console.log('Image failed to load, showing fallback');
+                      setImageErrors(prev => new Set([...prev, currentImageIndex]));
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', teamImages[currentImageIndex]);
+                      // Remove from error set if it loads successfully
+                      setImageErrors(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(currentImageIndex);
+                        return newSet;
+                      });
+                    }}
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 
                 {/* Navigation Buttons */}

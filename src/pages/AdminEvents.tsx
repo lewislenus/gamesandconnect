@@ -1,4 +1,4 @@
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, useEffect, useCallback, type ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -101,7 +101,7 @@ export default function AdminEvents() {
   const [events, setEvents] = useState<AdminEventRow[]>([]);
   const [listLoading, setListLoading] = useState<boolean>(false);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setListLoading(true);
       const { data, error } = await supabase
@@ -158,11 +158,11 @@ export default function AdminEvents() {
     } finally {
       setListLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
 
   const updateArrayField = (field: 'requirements' | 'includes', index: number, value: string) => {
     const newArray = [...form[field]];

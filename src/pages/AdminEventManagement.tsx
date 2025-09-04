@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,15 +39,7 @@ export default function AdminEventManagement() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
-
-  useEffect(() => {
-    filterEvents();
-  }, [events, searchTerm, categoryFilter, statusFilter]);
-
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getEvents();
@@ -62,14 +54,14 @@ export default function AdminEventManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterEvents = () => {
+  const filterEvents = useCallback(() => {
     let filtered = events;
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(event => 
+      filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.location.toLowerCase().includes(searchTerm.toLowerCase())
@@ -87,7 +79,15 @@ export default function AdminEventManagement() {
     }
 
     setFilteredEvents(filtered);
-  };
+  }, [events, searchTerm, categoryFilter, statusFilter]);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  useEffect(() => {
+    filterEvents();
+  }, [filterEvents]);
 
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
@@ -325,17 +325,24 @@ export default function AdminEventManagement() {
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           <span className="text-sm">
-                            {(event.total_spots || 0) - (event.spots || 0)}/{event.total_spots}
+                                                        {/* Registration Progress */}
+                            {event.capacity && (
+                              <div className="text-xs text-muted-foreground">
+                                Capacity: {event.capacity}
+                              </div>
+                            )}
                           </span>
                         </div>
-                        <div className="w-16 bg-muted rounded-full h-1 mt-1">
-                          <div 
-                            className="bg-primary h-1 rounded-full"
-                            style={{ 
-                              width: `${((event.total_spots || 0) - (event.spots || 0)) / (event.total_spots || 1) * 100}%` 
-                            }}
-                          ></div>
-                        </div>
+                        {event.capacity && (
+                          <div className="w-16 bg-muted rounded-full h-1 mt-1">
+                            <div 
+                              className="bg-primary h-1 rounded-full"
+                              style={{ 
+                                width: `50%` // Placeholder percentage since we don't have registration count
+                              }}
+                            ></div>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>{getStatusBadge(event.status)}</TableCell>
                       <TableCell>

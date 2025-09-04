@@ -261,43 +261,26 @@ let isUsingSampleEvents = false;
 
 export const getEvents = async (): Promise<Event[]> => {
   try {
-    console.log('Fetching events from Supabase...');
-    console.log('Supabase configured');
-    
     const { data, error, status } = await supabase
       .from('events')
       .select('*')
       .order('date', { ascending: true });
 
-    console.log('Full events query response:', { status, error, rawLength: data?.length });
-
     if (error) {
       console.error('Error fetching events:', error);
-      console.error('Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-      console.log('Falling back to sample events due to database error');
       isUsingSampleEvents = true;
       return sampleEvents;
     }
 
     if (!data) {
-      console.log('Events query returned null data object');
       isUsingSampleEvents = true;
       return sampleEvents;
     }
     
     if (Array.isArray(data) && data.length === 0) {
-      console.log('[Diagnostics] Zero rows. Possible causes: wrong project URL, RLS blocking anon role, migration not run in this project, or using different schema. Falling back.');
       isUsingSampleEvents = true;
       return sampleEvents;
     }
-
-    console.log(`Found ${data.length} events in database`);
-    console.log('Sample event data:', data[0]);
 
     // Transform database data to match Event interface using provided schema
     const transformedData = data.map((row: any) => {
@@ -341,18 +324,15 @@ export const getEvents = async (): Promise<Event[]> => {
 
 export const getEventById = async (id: string): Promise<Event | null> => {
   try {
-    console.log(`Fetching event ${id} from Supabase...`);
     const { data, error, status } = await supabase
       .from('events')
       .select('*')
       .eq('id', id)
       .maybeSingle(); // prevents 406 / PGRST116 when zero rows
 
-    console.log('getEventById raw response:', { id, status, error, found: !!data });
-
     if (error) {
       if ((error as any).code === 'PGRST116') {
-        console.warn('No rows for that id (PGRST116). Returning null fallback.');
+        // No rows found - this is normal
       } else {
         console.error('Error fetching event:', error);
       }
@@ -360,7 +340,6 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     }
 
     if (!data) {
-      console.log(`No event found with id ${id} (null data)`);
       return sampleEvents.find(event => event.id === id) || null;
     }
 
@@ -431,7 +410,6 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       updated_at: row.created_at || new Date().toISOString(),
     };
 
-    console.log('Transformed event:', transformedEvent);
     return transformedEvent;
   } catch (error) {
     console.error('Error in getEventById:', error);
@@ -444,8 +422,6 @@ export const getEventById = async (id: string): Promise<Event | null> => {
  */
 export const getEventBySlug = async (slug: string): Promise<Event | null> => {
   try {
-    console.log(`Fetching event with slug: ${slug}`);
-    
     // First, try to get all events and find by generated slug
     const events = await getEvents();
     
@@ -453,7 +429,6 @@ export const getEventBySlug = async (slug: string): Promise<Event | null> => {
     const event = events.find(event => generateEventSlug(event.title) === slug);
     
     if (event) {
-      console.log(`Found event by slug: ${event.title}`);
       return event;
     }
     
@@ -464,7 +439,6 @@ export const getEventBySlug = async (slug: string): Promise<Event | null> => {
       return sampleEvent;
     }
     
-    console.log(`No event found with slug: ${slug}`);
     return null;
   } catch (error) {
     console.error('Error in getEventBySlug:', error);
@@ -477,7 +451,6 @@ export const getEventBySlug = async (slug: string): Promise<Event | null> => {
 
 // Helper function to register with sample event data when database event is not found
 const registerWithSampleEvent = async (eventId: string, userData: any, sampleEvent: Event) => {
-  console.log('Registering with sample event data:', sampleEvent);
   
   // Since this is sample data, we'll simulate a successful registration
   // In a real scenario, you might want to store this in localStorage or handle differently

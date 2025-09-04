@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,15 +39,7 @@ export default function AdminRegistrations() {
   const [showDetails, setShowDetails] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRegistrations();
-  }, []);
-
-  useEffect(() => {
-    filterRegistrations();
-  }, [registrations, searchTerm, statusFilter]);
-
-  const loadRegistrations = async () => {
+  const loadRegistrations = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getEventRegistrations();
@@ -62,27 +54,35 @@ export default function AdminRegistrations() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterRegistrations = () => {
+  const filterRegistrations = useCallback(() => {
     let filtered = registrations;
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(reg => 
-        reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        reg.event?.title.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(registration =>
+        registration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        registration.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        registration.event?.title?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Filter by status
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(reg => reg.status === statusFilter);
+      filtered = filtered.filter(registration => registration.status === statusFilter);
     }
 
     setFilteredRegistrations(filtered);
-  };
+  }, [registrations, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    loadRegistrations();
+  }, [loadRegistrations]);
+
+  useEffect(() => {
+    filterRegistrations();
+  }, [filterRegistrations]);
 
   const handleStatusUpdate = async (registrationId: string, newStatus: 'confirmed' | 'pending' | 'cancelled') => {
     setUpdatingStatus(registrationId);

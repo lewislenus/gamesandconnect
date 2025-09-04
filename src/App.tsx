@@ -10,6 +10,8 @@ import AdminHeader from "./components/AdminHeader";
 import HomePage from "./pages/HomePage";
 import Events from "./pages/Events";
 import Community from "./pages/Community";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 import EventDetails from "./pages/EventDetails";
 import UserRegistrations from "./pages/UserRegistrations";
@@ -18,6 +20,7 @@ import AdminEvents from "./pages/AdminEvents";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRegistrations from "./pages/AdminRegistrations";
 import AdminEventManagement from "./pages/AdminEventManagement";
+import AdminBlog from "./pages/AdminBlog";
 import Teams from "./pages/Teams";
 import TeamRed from "./pages/TeamRed";
 import TeamGreen from "./pages/TeamGreen";
@@ -58,6 +61,8 @@ const App = () => (
             <Route path="/events" element={<MainLayout><Events /></MainLayout>} />
             <Route path="/events/:slug" element={<MainLayout><EventDetails /></MainLayout>} />
             <Route path="/community" element={<MainLayout><Community /></MainLayout>} />
+            <Route path="/blog" element={<MainLayout><Blog /></MainLayout>} />
+            <Route path="/blog/:slug" element={<MainLayout><BlogPost /></MainLayout>} />
 
             <Route path="/my-registrations" element={<MainLayout><UserRegistrations /></MainLayout>} />
             <Route path="/teams" element={<MainLayout><Teams /></MainLayout>} />
@@ -90,6 +95,11 @@ const App = () => (
             <Route path="/admin/registrations" element={
               <ProtectedRoute requireAdmin={true}>
                 <AdminLayout><AdminRegistrations /></AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/blog" element={
+              <ProtectedRoute requireAdmin={true}>
+                <AdminLayout><AdminBlog /></AdminLayout>
               </ProtectedRoute>
             } />
             

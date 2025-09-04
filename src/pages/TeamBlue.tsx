@@ -9,11 +9,10 @@ export default function TeamBlue() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const teamImages = [
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915379/_MG_1921_pihzka.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915386/_MG_2024_pquwqm.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915387/_MG_2004_rjoyrt.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915377/_MG_1906_yggfep.jpg",
-    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915390/_MG_2169_sjbmts.jpg"
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746918906/_MG_2027_oblrvo.jpg",
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915400/_MG_2284_njl6kn.jpg",
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915395/_MG_2305_z4ozhb.jpg",
+    "https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915383/_MG_2106_epgam5.jpg"
   ];
 
   const teamMembers = [
@@ -22,56 +21,56 @@ export default function TeamBlue() {
       role: "Team Captain",
       avatar: "👨🏿‍✈️",
       quote: "Team Blue is the depth of the ocean - calm on the surface but with immense power underneath.",
-      joinedDate: "Mar 2024",
-      achievements: ["Strategic Leader", "Tournament Winner", "Team Builder"]
+      joinedDate: "Mar 2025",
+      achievements: ["Akosombo Champion", "Lake Adventure Leader", "Team Builder"]
     },
     {
       name: "Abena K.",
       role: "Strategy Coordinator",
       avatar: "👩🏿‍💼",
       quote: "Like the deep blue sea, we adapt to any situation and find ways to navigate through challenges.",
-      joinedDate: "Feb 2024",
-      achievements: ["Master Strategist", "Event Organizer", "Problem Solver"]
+      joinedDate: "Feb 2025",
+      achievements: ["Master Strategist", "Boat Activity Expert", "Problem Solver"]
     },
     {
       name: "Yaw O.",
-      role: "Technology Lead",
+      role: "Adventure Lead",
       avatar: "👨🏿‍💻",
       quote: "Innovation flows through Team Blue like a river. We're always finding new ways to excel.",
-      joinedDate: "Apr 2024",
-      achievements: ["Tech Innovator", "Gaming Coach", "Digital Pioneer"]
+      joinedDate: "Apr 2025",
+      achievements: ["Adventure Tourism Pro", "Dam Tour Guide", "Team Activities Coach"]
     },
     {
       name: "Efua D.",
       role: "Community Manager",
       avatar: "👩🏿‍🎓",
       quote: "Trust and loyalty run deeper than the ocean in Team Blue. We're family first, competitors second.",
-      joinedDate: "May 2024",
-      achievements: ["Community Builder", "Mentor", "Cultural Ambassador"]
+      joinedDate: "May 2025",
+      achievements: ["Community Builder", "Travel Mentor", "Cultural Ambassador"]
     }
   ];
 
   const recentEvents = [
     {
-      name: "Ocean Gaming Championship",
-      date: "Dec 15, 2024",
-      location: "Labadi Beach Resort",
+      name: "Akosombo Games Day Tournament",
+      date: "Jun 15, 2025",
+      location: "Akosombo, Eastern Region",
+      result: "2nd Place - Runner-up",
+      participants: "Blue Waves Squad"
+    },
+    {
+      name: "Aburi Gardens Adventure",
+      date: "Jul 22, 2025",
+      location: "Aburi Botanical Gardens",
       result: "2nd Place",
-      participants: "Blue Waves"
+      participants: "20 Blue Members"
     },
     {
-      name: "Tech Innovation Summit",
-      date: "Nov 28, 2024",
-      location: "Accra Tech Hub",
-      result: "Innovation Award",
-      participants: "25 Members"
-    },
-    {
-      name: "Strategy Masters League",
-      date: "Nov 12, 2024",
-      location: "University of Ghana",
-      result: "Champions",
-      participants: "Blue Minds"
+      name: "Beach Day Games",
+      date: "Jul 8, 2025",
+      location: "Labadi Beach, Accra",
+      result: "Participation",
+      participants: "24 Team Members"
     }
   ];
 
@@ -116,15 +115,15 @@ export default function TeamBlue() {
               
               <div className="grid grid-cols-3 gap-6 mb-8">
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">532</div>
+                  <div className="text-3xl font-bold text-white mb-1">30</div>
                   <div className="text-white/80 text-sm">Members</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">143</div>
+                  <div className="text-3xl font-bold text-white mb-1">1</div>
                   <div className="text-white/80 text-sm">Wins</div>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">#2</div>
+                  <div className="text-3xl font-bold text-white mb-1">#1</div>
                   <div className="text-white/80 text-sm">Ranking</div>
                 </div>
               </div>

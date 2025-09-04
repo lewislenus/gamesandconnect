@@ -23,18 +23,14 @@ export default function Events() {
       setLoading(true);
       try {
         const data = await getEvents();
-        console.log('Loaded events:', data);
         
         if (data && data.length > 0) {
           setEvents(data);
-          console.log(`Successfully loaded ${data.length} events`);
         } else {
-          console.log('No events found, using sample data');
           setEvents(sampleEvents);
         }
       } catch (error) {
         console.error('Failed to load events:', error);
-        console.log('Error occurred, falling back to sample data');
         setEvents(sampleEvents);
       } finally {
         setLoading(false);

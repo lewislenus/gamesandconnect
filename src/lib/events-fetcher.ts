@@ -27,13 +27,37 @@ function formatTimeRange(rangeStr: string): string {
 }
 
 // Enhanced Event type with better typing
-export interface EventData extends Tables<'events'> {
-  image_url?: string; // Add image_url field
-  agenda: Array<{ time: string; activity: string }> | null; // Match the database schema
+export interface EventData {
+  // Base properties from Supabase events table
+  id: number;
+  title: string;
+  description: string;
+  long_description: string | null;
+  date: string;
+  time: string | null;
+  location: string;
+  category: string | null;
+  spots: number | null;
+  total_spots: number | null;
+  price: string | null;
+  status: string | null;
+  image_url: string | null;
+  additional_info: any | null;
+  time_range: string | null;
+  created_at: string;
+  
+  // Enhanced properties
+  agenda: Array<{ time: string; activity: string }> | null;
   formatted_date: string;
   formatted_time: string;
   registration_count: number;
   availability_status: 'available' | 'limited' | 'full';
+  
+  // Additional properties used in the component
+  image?: string; // For emoji/icon fallback
+  organizer?: string; // Event organizer
+  requirements?: string[]; // Event requirements array
+  includes?: string[]; // What's included array
 }
 
 export interface FetchEventsResult {
@@ -131,16 +155,11 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
         spots,
         total_spots,
         price,
-        image,
+        image_url,
         status,
-        organizer,
-        requirements,
-        includes,
-        agenda,
-        flyer,
-        rating,
-        created_at,
-        updated_at
+        additional_info,
+        time_range,
+        created_at
       `, { count: 'exact' })
       .order('date', { ascending: true });
 
@@ -182,13 +201,26 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
     const enhancedEvents: EventData[] = data.map((event) => {
       const registrationCount = (event.total_spots || 0) - (event.spots || 0);
 
-      // Parse schedule similarly to getEventById
+      // Parse additional_info JSON to extract extra fields
+      let additionalData: any = {};
+      try {
+        if (event.additional_info && typeof event.additional_info === 'object') {
+          additionalData = event.additional_info;
+        } else if (typeof event.additional_info === 'string') {
+          additionalData = JSON.parse(event.additional_info);
+        }
+      } catch (e) {
+        console.warn('Failed to parse additional_info for event id', event.id, e);
+      }
+
+      // Parse schedule from additional_info or other sources
       let parsedSchedule: Array<{ time: string; activity: string }> = [];
       try {
         const rawSchedule: any = (
-          (event as any).event_schedule !== undefined ? (event as any).event_schedule :
-          event.agenda !== undefined ? event.agenda :
-          (event as any)['event schedule'] !== undefined ? (event as any)['event schedule'] : undefined
+          additionalData.event_schedule || 
+          additionalData.agenda || 
+          additionalData['event schedule'] || 
+          null
         );
         if (Array.isArray(rawSchedule)) {
           parsedSchedule = rawSchedule as Array<{ time: string; activity: string }>;
@@ -222,18 +254,21 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
       return {
         ...event,
         formatted_date: formatEventDate(event.date),
-        formatted_time: (event as any).time || 'Time TBA',
+        formatted_time: event.time || 'Time TBA',
         registration_count: registrationCount,
         availability_status: getAvailabilityStatus(event.spots || 0, event.total_spots || 0),
-        requirements: Array.isArray(event.requirements)
-          ? event.requirements as string[]
-          : (typeof event.requirements === 'string'
-              ? JSON.parse(event.requirements)
+        // Extract additional fields from additional_info or provide defaults
+        image: additionalData.image || '🎮',
+        organizer: additionalData.organizer || 'Event Organizer',
+        requirements: Array.isArray(additionalData.requirements)
+          ? additionalData.requirements as string[]
+          : (typeof additionalData.requirements === 'string'
+              ? JSON.parse(additionalData.requirements)
               : []),
-        includes: Array.isArray(event.includes)
-          ? event.includes as string[]
-          : (typeof event.includes === 'string'
-              ? JSON.parse(event.includes)
+        includes: Array.isArray(additionalData.includes)
+          ? additionalData.includes as string[]
+          : (typeof additionalData.includes === 'string'
+              ? JSON.parse(additionalData.includes)
               : []),
         agenda: parsedSchedule
       };
@@ -283,6 +318,18 @@ export async function fetchEventById(eventId: string): Promise<EventData | null>
 
     console.log('✅ Successfully fetched event:', data.title);
 
+    // Parse additional_info JSON to extract extra fields
+    let additionalData: any = {};
+    try {
+      if (data.additional_info && typeof data.additional_info === 'object') {
+        additionalData = data.additional_info;
+      } else if (typeof data.additional_info === 'string') {
+        additionalData = JSON.parse(data.additional_info);
+      }
+    } catch (e) {
+      console.warn('Failed to parse additional_info for event id', data.id, e);
+    }
+
     // Transform the data
     const registrationCount = (data.total_spots || 0) - (data.spots || 0);
     
@@ -292,20 +339,23 @@ export async function fetchEventById(eventId: string): Promise<EventData | null>
       formatted_time: data.time || 'Time TBA',
       registration_count: registrationCount,
       availability_status: getAvailabilityStatus(data.spots || 0, data.total_spots || 0),
-      requirements: Array.isArray(data.requirements) 
-        ? data.requirements as string[]
-        : (typeof data.requirements === 'string' 
-            ? JSON.parse(data.requirements) 
+      // Extract additional fields from additional_info or provide defaults
+      image: additionalData.image || '🎮',
+      organizer: additionalData.organizer || 'Event Organizer',
+      requirements: Array.isArray(additionalData.requirements) 
+        ? additionalData.requirements as string[]
+        : (typeof additionalData.requirements === 'string' 
+            ? JSON.parse(additionalData.requirements) 
             : []),
-      includes: Array.isArray(data.includes)
-        ? data.includes as string[]
-        : (typeof data.includes === 'string'
-            ? JSON.parse(data.includes)
+      includes: Array.isArray(additionalData.includes)
+        ? additionalData.includes as string[]
+        : (typeof additionalData.includes === 'string'
+            ? JSON.parse(additionalData.includes)
             : []),
-      agenda: Array.isArray(data.agenda)
-        ? data.agenda as Array<{ time: string; activity: string }>
-        : (typeof data.agenda === 'string'
-            ? JSON.parse(data.agenda)
+      agenda: Array.isArray(additionalData.agenda)
+        ? additionalData.agenda as Array<{ time: string; activity: string }>
+        : (typeof additionalData.agenda === 'string'
+            ? JSON.parse(additionalData.agenda)
             : [])
     };
 

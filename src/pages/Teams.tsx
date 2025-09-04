@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Users, Trophy, Target, ArrowRight } from 'lucide-react';
 import { JoinTeamButton } from '@/components/JoinTeamButton';
+import { TeamWinStatsDisplay } from '@/components/TeamWinStatsDisplay';
 
 export default function Teams() {
   const teams = [
@@ -16,10 +17,10 @@ export default function Teams() {
       gradientFrom: "from-red-500",
       gradientTo: "to-red-600",
       motto: "Fire & Passion",
-      members: "485",
-      wins: "127",
+      members: "35",
+      wins: "1",
       description: "The warriors of the community. Team Red brings fierce competition and unwavering determination to every challenge.",
-      strengths: ["Competitive Gaming", "Leadership", "Team Spirit", "Strategic Planning"]
+      strengths: ["Beach Sports", "Competitive Spirit", "Team Unity", "Strategic Planning"]
     },
     {
       name: "Team Yellow",
@@ -30,10 +31,10 @@ export default function Teams() {
       gradientFrom: "from-yellow-500",
       gradientTo: "to-yellow-600",
       motto: "Lightning Speed",
-      members: "423",
-      wins: "134",
-      description: "Quick thinkers and fast movers. Team Yellow dominates with speed, agility, and innovative solutions.",
-      strengths: ["Quick Thinking", "Innovation", "Adaptability", "Tech Skills"]
+      members: "32",
+      wins: "1",
+      description: "Quick thinkers and fast movers. Team Yellow excels in knowledge-based challenges and historical quizzes.",
+      strengths: ["Historical Knowledge", "Quick Thinking", "Cultural Awareness", "Educational Games"]
     },
     {
       name: "Team Green",
@@ -44,10 +45,10 @@ export default function Teams() {
       gradientFrom: "from-green-500",
       gradientTo: "to-green-600",
       motto: "Nature's Force",
-      members: "467",
-      wins: "119",
-      description: "The balanced team that brings harmony and sustainable strategies to overcome any obstacle.",
-      strengths: ["Sustainability", "Balance", "Growth Mindset", "Community Building"]
+      members: "28",
+      wins: "1",
+      description: "The balanced team that brings harmony and sustainable strategies. Masters of nature-based adventures and hiking challenges.",
+      strengths: ["Nature Adventures", "Sustainability", "Hiking Excellence", "Environmental Awareness"]
     },
     {
       name: "Team Blue",
@@ -58,10 +59,10 @@ export default function Teams() {
       gradientFrom: "from-blue-500",
       gradientTo: "to-blue-600",
       motto: "Ocean Deep",
-      members: "512",
-      wins: "142",
-      description: "The depth of knowledge and wisdom. Team Blue excels through careful planning and deep thinking.",
-      strengths: ["Strategic Depth", "Knowledge", "Patience", "Analytical Skills"]
+      members: "30",
+      wins: "1",
+      description: "The depth of knowledge and wisdom. Team Blue excels in water activities and adventure tourism challenges.",
+      strengths: ["Water Activities", "Adventure Tourism", "Strategic Depth", "Lake & Dam Adventures"]
     }
   ];
 
@@ -176,7 +177,7 @@ export default function Teams() {
                   
                   {/* Action Buttons */}
                   <div className="flex gap-3">
-                    <Link to={`/teams/${team.color}`} className="flex-1">
+                    <Link to={`/team-${team.color}`} className="flex-1">
                       <Button className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30 border backdrop-blur-sm">
                         Meet the Team
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -197,6 +198,13 @@ export default function Teams() {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Tournament Champions */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <TeamWinStatsDisplay />
         </div>
       </section>
 
