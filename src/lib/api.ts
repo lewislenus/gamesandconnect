@@ -1,4 +1,5 @@
 import { supabase } from '../integrations/supabase/client';
+import { generateEventSlug } from './utils';
 
 // Helper functions for time formatting
 function formatSingleTime(timeStr: string): string {
@@ -435,6 +436,42 @@ export const getEventById = async (id: string): Promise<Event | null> => {
   } catch (error) {
     console.error('Error in getEventById:', error);
     return sampleEvents.find(event => event.id === id) || null;
+  }
+};
+
+/**
+ * Get event by slug (generated from title)
+ */
+export const getEventBySlug = async (slug: string): Promise<Event | null> => {
+  try {
+    console.log(`Fetching event with slug: ${slug}`);
+    
+    // First, try to get all events and find by generated slug
+    const events = await getEvents();
+    
+    // Find event where the generated slug matches
+    const event = events.find(event => generateEventSlug(event.title) === slug);
+    
+    if (event) {
+      console.log(`Found event by slug: ${event.title}`);
+      return event;
+    }
+    
+    // If not found in live events, check sample events
+    const sampleEvent = sampleEvents.find(event => generateEventSlug(event.title) === slug);
+    if (sampleEvent) {
+      console.log(`Found sample event by slug: ${sampleEvent.title}`);
+      return sampleEvent;
+    }
+    
+    console.log(`No event found with slug: ${slug}`);
+    return null;
+  } catch (error) {
+    console.error('Error in getEventBySlug:', error);
+    
+    // Fallback to sample events
+    const sampleEvent = sampleEvents.find(event => generateEventSlug(event.title) === slug);
+    return sampleEvent || null;
   }
 };
 

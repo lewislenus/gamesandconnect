@@ -5,6 +5,7 @@ import { Calendar, MapPin, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getEvents, Event } from '@/lib/api';
 import { useTypingEffect } from '@/hooks/use-typing-effect';
+import { getEventUrl } from '@/lib/utils';
 
 export default function HomePage() {
   const [nextEvent, setNextEvent] = useState<Event | null>(null);
@@ -458,7 +459,7 @@ export default function HomePage() {
                   <Button 
                     size="lg" 
                     className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90"
-                    onClick={() => nextEvent ? window.open(`/events/${nextEvent.id}`, '_self') : window.open('/events', '_self')}
+                    onClick={() => nextEvent ? window.open(getEventUrl(nextEvent.title), '_self') : window.open('/events', '_self')}
                   >
                     {nextEvent ? `Register for ${nextEvent.title}` : 'Explore Events'}
                   </Button>
@@ -999,7 +1000,7 @@ export default function HomePage() {
           <div className="relative mb-8">
             <div className="flex overflow-hidden">
               <motion.div 
-                className="flex gap-6 min-w-full"
+                className="flex gap-4 sm:gap-6 min-w-full"
                 animate={{ x: [0, -1200] }}
                 transition={{ 
                   duration: 25, 
@@ -1096,7 +1097,7 @@ export default function HomePage() {
                 ].map((photo, index) => (
                   <motion.div 
                     key={index} 
-                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg min-w-[280px] flex-shrink-0 border border-white/20"
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg min-w-[240px] sm:min-w-[280px] flex-shrink-0 border border-white/20"
                     whileHover={{ 
                       scale: 1.05, 
                       zIndex: 10,
@@ -1104,7 +1105,7 @@ export default function HomePage() {
                     }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="relative h-64 overflow-hidden">
+                    <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
                       <motion.img
                         src={photo.image}
                         alt={photo.title}
@@ -1124,7 +1125,7 @@ export default function HomePage() {
           <div className="relative">
             <div className="flex overflow-hidden">
               <motion.div 
-                className="flex gap-6 min-w-full"
+                className="flex gap-4 sm:gap-6 min-w-full"
                 animate={{ x: [-1200, 0] }}
                 transition={{ 
                   duration: 30, 
@@ -1221,7 +1222,7 @@ export default function HomePage() {
                 ].map((photo, index) => (
                   <motion.div 
                     key={index} 
-                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg min-w-[280px] flex-shrink-0 border border-white/20"
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden shadow-lg min-w-[240px] sm:min-w-[280px] flex-shrink-0 border border-white/20"
                     whileHover={{ 
                       scale: 1.05, 
                       zIndex: 10,
@@ -1229,7 +1230,7 @@ export default function HomePage() {
                     }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="relative h-64 overflow-hidden">
+                    <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
                       <motion.img
                         src={photo.image}
                         alt={photo.title}

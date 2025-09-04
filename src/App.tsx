@@ -56,7 +56,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
             <Route path="/events" element={<MainLayout><Events /></MainLayout>} />
-            <Route path="/events/:id" element={<MainLayout><EventDetails /></MainLayout>} />
+            <Route path="/events/:slug" element={<MainLayout><EventDetails /></MainLayout>} />
             <Route path="/community" element={<MainLayout><Community /></MainLayout>} />
 
             <Route path="/my-registrations" element={<MainLayout><UserRegistrations /></MainLayout>} />

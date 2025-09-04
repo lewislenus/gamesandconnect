@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, Users, ArrowLeft, Share2, Heart, Phone, Mail, User, Download, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getEventById, sampleEvents, Event } from '@/lib/api';
+import { getEventBySlug, sampleEvents, Event } from '@/lib/api';
+import { generateEventSlug } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
 import SEO from '@/components/SEO';
 
 export default function EventDetails() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
@@ -21,19 +22,19 @@ export default function EventDetails() {
 
   useEffect(() => {
     async function loadEvent() {
-      if (!id) {
+      if (!slug) {
         navigate('/events');
         return;
       }
 
       setLoading(true);
       try {
-        const data = await getEventById(id);
+        const data = await getEventBySlug(slug);
         if (data) {
           setEvent(data);
         } else {
-          // Try to find in sample data
-          const sample = sampleEvents.find(e => e.id === id);
+          // Try to find in sample data by slug
+          const sample = sampleEvents.find(e => generateEventSlug(e.title) === slug);
           if (sample) {
             setEvent(sample);
           } else {
@@ -48,8 +49,8 @@ export default function EventDetails() {
         }
       } catch (error) {
         console.error('Failed to load event:', error);
-        // Try to find in sample data
-        const sample = sampleEvents.find(e => e.id === id);
+        // Try to find in sample data by slug
+        const sample = sampleEvents.find(e => generateEventSlug(e.title) === slug);
         if (sample) {
           setEvent(sample);
         } else {
@@ -66,12 +67,12 @@ export default function EventDetails() {
     }
     
     loadEvent();
-  }, [id, navigate, toast]);
+  }, [slug, navigate, toast]);
 
   const handleRegistrationSuccess = () => {
     // Reload event data to get updated information
-    if (id) {
-      getEventById(id).then((data) => {
+    if (slug) {
+      getEventBySlug(slug).then((data) => {
         if (data) setEvent(data);
       });
     }
@@ -259,7 +260,7 @@ export default function EventDetails() {
         description={event.long_description || event.description}
         keywords={`${event.title}, ${event.category}, gaming event Ghana, ${event.location}, event registration`}
         image={event.image_url || event.flyer?.url}
-        url={`https://gamesandconnect.netlify.app/events/${event.id}`}
+        url={`https://gamesandconnect.netlify.app/events/${generateEventSlug(event.title)}`}
         type="article"
         article={{
           publishedTime: event.created_at,

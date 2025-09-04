@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, Users, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { getEvents, sampleEvents, Event } from '@/lib/api';
+import { getEvents, Event, sampleEvents } from '@/lib/api';
+import { generateEventSlug, getEventUrl } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
@@ -244,7 +245,7 @@ export default function Events() {
                         transition: { duration: 0.2 }
                       }}
                     >
-                      <Link to={`/events/${event.id}`} className="block">
+                      <Link to={getEventUrl(event.title)} className="block">
                         <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden cursor-pointer">
                           {/* Event Image/Poster */}
                           {event.image_url ? (
@@ -386,7 +387,7 @@ export default function Events() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  navigator.clipboard.writeText(window.location.origin + `/events/${event.id}`).then(() => {
+                                  navigator.clipboard.writeText(window.location.origin + getEventUrl(event.title)).then(() => {
                                     toast({
                                       title: "Link Copied!",
                                       description: "Event link has been copied to clipboard.",
@@ -434,7 +435,7 @@ export default function Events() {
                         transition: { duration: 0.2 }
                       }}
                     >
-                      <Link to={`/events/${event.id}`} className="block">
+                      <Link to={getEventUrl(event.title)} className="block">
                         <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden cursor-pointer">
                           {/* Event Image/Poster for Past Events */}
                           {event.image_url ? (
@@ -577,7 +578,7 @@ export default function Events() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  navigator.clipboard.writeText(window.location.origin + `/events/${event.id}`).then(() => {
+                                  navigator.clipboard.writeText(window.location.origin + getEventUrl(event.title)).then(() => {
                                     toast({
                                       title: "Link Copied!",
                                       description: "Event link has been copied to clipboard.",
