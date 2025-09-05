@@ -16,7 +16,7 @@ interface RecentWinnersProps {
   className?: string;
 }
 
-export function RecentWinners({ limit = 3, showImages = true, className = '' }: RecentWinnersProps) {
+export function RecentWinners({ limit = 1, showImages = true, className = '' }: RecentWinnersProps) {
   const [winners, setWinners] = useState<TournamentResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,17 +65,24 @@ export function RecentWinners({ limit = 3, showImages = true, className = '' }: 
     <div className={`space-y-6 ${className}`}>
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-foreground mb-2">
-          🏆 Recent <span className="text-primary">Champions</span>
+          🏆 Latest <span className="text-primary">Champion</span>
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Celebrating our latest tournament winners and their incredible achievements
+          Celebrating our latest tournament winner and their incredible achievement
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {winners.map((winner, index) => {
-          const teamInfo = getTeamDisplayInfo(winner.winning_team);
-          const runnerUpInfo = winner.runner_up_team ? getTeamDisplayInfo(winner.runner_up_team) : null;
+      <div className="flex justify-center">
+        <div className="max-w-md w-full">
+          {winners.map((winner, index) => {
+            const teamInfo = getTeamDisplayInfo(winner.winning_team);
+            const runnerUpInfo = winner.runner_up_team ? getTeamDisplayInfo(winner.runner_up_team) : null;
+            
+            // Skip if no team info found
+            if (!teamInfo) {
+              console.warn('No team info found for team:', winner.winning_team, 'Available teams: red, blue, green, yellow');
+              return null;
+            }
 
           return (
             <motion.div
@@ -168,6 +175,7 @@ export function RecentWinners({ limit = 3, showImages = true, className = '' }: 
             </motion.div>
           );
         })}
+        </div>
       </div>
     </div>
   );

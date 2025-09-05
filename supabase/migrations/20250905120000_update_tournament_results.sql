@@ -1,7 +1,7 @@
 -- Remove prize money from tournament results and correct team assignments
--- Team Green won Games day at Akosombo
+-- Team Green won Games day at Akosombo and is the latest champion
 
--- Update tournament results to remove prize money and fix team assignments
+-- Update tournament results to remove prize money
 UPDATE public.tournament_results SET 
     prize_amount = NULL
 WHERE prize_amount IS NOT NULL;
@@ -11,6 +11,15 @@ UPDATE public.tournament_results SET
     winning_team = 'green',
     runner_up_team = 'blue'
 WHERE tournament_name = 'Akosombo Games Day - Action Packed Day Trip';
+
+-- Update dates to make Team Green's Aburi Gardens victory the most recent
+UPDATE public.tournament_results SET 
+    tournament_date = '2025-08-22'
+WHERE tournament_name = 'Aburi Gardens Adventure Challenge';
+
+UPDATE public.tournament_results SET 
+    tournament_date = '2025-08-14'
+WHERE tournament_name = 'Cape Coast Historical Quiz & Games';
 
 -- Update the get_team_wins_stats function to remove prize money references
 CREATE OR REPLACE FUNCTION get_team_wins_stats()

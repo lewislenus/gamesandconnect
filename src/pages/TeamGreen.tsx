@@ -55,7 +55,7 @@ export default function TeamGreen() {
   const recentEvents = [
     {
       name: "Aburi Gardens Adventure Challenge",
-      date: "Jul 22, 2025",
+      date: "Aug 22, 2025",
       location: "Aburi Botanical Gardens",
       result: "1st Place - Champions",
       participants: "Green Nature Squad"

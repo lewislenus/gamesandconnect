@@ -72,7 +72,7 @@ INSERT INTO public.tournament_results (
     'Nature Activities',
     'green',
     'blue',
-    '2025-07-22',
+    '2025-08-22',
     20,
     'Team Green proved their nature mastery during the botanical gardens exploration, excelling in hiking challenges and environmental activities.',
     'https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915398/_MG_2403_hknyss.jpg'
@@ -82,7 +82,7 @@ INSERT INTO public.tournament_results (
     'Educational Games',
     'yellow',
     'red',
-    '2025-09-14',
+    '2025-08-14',
     32,
     'Team Yellow showcased their knowledge and strategic thinking during our historical castle tour games and cultural challenges at Cape Coast.',
     'https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915401/_MG_2185_rqpdrv.jpg'

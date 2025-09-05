@@ -867,7 +867,7 @@ export default function HomePage() {
       {/* Recent Winners Section */}
       <section className="py-20 bg-muted/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RecentWinners limit={3} showImages={true} />
+          <RecentWinners limit={1} showImages={true} />
         </div>
       </section>
 

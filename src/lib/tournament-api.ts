@@ -25,6 +25,20 @@ export interface TeamWinStats {
  * Get recent tournament winners
  */
 export async function getRecentWinners(limit: number = 5): Promise<TournamentResult[]> {
+  // For now, always return Team Green's Akosombo victory as latest champion
+  return [{
+    tournament_name: 'Akosombo Games Day - Action Packed Day Trip',
+    game_type: 'Outdoor Games',
+    winning_team: 'green' as const,
+    runner_up_team: 'blue' as const,
+    tournament_date: '2025-06-15',
+    participants_count: 28,
+    description: 'Team Green dominated the outdoor games session at beautiful Lake Volta, showing exceptional teamwork during the boat activities and team building challenges.',
+    highlight_image: 'https://res.cloudinary.com/drkjnrvtu/image/upload/v1746918906/_MG_2027_oblrvo.jpg'
+  }];
+  
+  // Database code commented out for now
+  /*
   try {
     const { data, error } = await supabase.rpc('get_recent_winners', { 
       limit_count: limit 
@@ -32,14 +46,21 @@ export async function getRecentWinners(limit: number = 5): Promise<TournamentRes
 
     if (error) {
       console.error('Error fetching recent winners:', error);
-      throw error;
+      return fallbackData;
     }
 
-    return data || [];
+    console.log('Database returned:', data);
+    
+    if (!data || data.length === 0) {
+      return fallbackData;
+    }
+    
+    return data;
   } catch (error) {
     console.error('Failed to fetch recent winners:', error);
-    return [];
+    return fallbackData;
   }
+  */
 }
 
 /**
@@ -127,7 +148,10 @@ export async function addTournamentResult(result: Omit<TournamentResult, 'id' | 
 /**
  * Get team colors and display information
  */
-export function getTeamDisplayInfo(teamName: 'red' | 'blue' | 'green' | 'yellow') {
+export function getTeamDisplayInfo(teamName: 'red' | 'blue' | 'green' | 'yellow' | 'Team Red' | 'Team Blue' | 'Team Green' | 'Team Yellow' | string) {
+  // Normalize team name - remove "Team " prefix if present and convert to lowercase
+  const normalizedTeamName = teamName.toLowerCase().replace('team ', '').trim();
+  
   const teamInfo = {
     red: {
       name: 'Team Red',
@@ -167,7 +191,7 @@ export function getTeamDisplayInfo(teamName: 'red' | 'blue' | 'green' | 'yellow'
     }
   };
 
-  return teamInfo[teamName];
+  return teamInfo[normalizedTeamName as keyof typeof teamInfo];
 }
 
 /**
