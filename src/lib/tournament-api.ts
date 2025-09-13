@@ -34,7 +34,7 @@ export async function getRecentWinners(limit: number = 5): Promise<TournamentRes
     tournament_date: '2025-06-15',
     participants_count: 28,
     description: 'Team Green dominated the outdoor games session at beautiful Lake Volta, showing exceptional teamwork during the boat activities and team building challenges.',
-    highlight_image: 'https://res.cloudinary.com/drkjnrvtu/image/upload/v1746918906/_MG_2027_oblrvo.jpg'
+    highlight_image: 'https://res.cloudinary.com/drkjnrvtu/image/upload/v1746915398/_MG_2403_hknyss.jpg'
   }];
   
   // Database code commented out for now
