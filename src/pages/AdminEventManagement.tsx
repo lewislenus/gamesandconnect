@@ -352,9 +352,11 @@ export default function AdminEventManagement() {
                               <Eye className="h-3 w-3" />
                             </Button>
                           </Link>
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-3 w-3" />
-                          </Button>
+                          <Link to={`/admin/events?edit=${event.id}`}>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          </Link>
                           <Button
                             size="sm"
                             variant="outline"

@@ -32,32 +32,36 @@ export interface EventData {
   id: number;
   title: string;
   description: string;
-  long_description: string | null;
   date: string;
-  time: string | null;
+  time_range: string;
   location: string;
   category: string | null;
-  spots: number | null;
-  total_spots: number | null;
+  capacity: number;
   price: string | null;
-  status: string | null;
   image_url: string | null;
   additional_info: any | null;
-  time_range: string | null;
-  created_at: string;
+  gallery: any | null;
+  "event schedule": string | null;
+  requirements: any | null;
+  includes: any | null;
+  organizer: string | null;
+  created_at: string | null;
   
-  // Enhanced properties
+  // Enhanced/computed properties for UI
   agenda: Array<{ time: string; activity: string }> | null;
+  event_schedule?: Array<{ time: string; activity: string }> | null;
   formatted_date: string;
   formatted_time: string;
   registration_count: number;
   availability_status: 'available' | 'limited' | 'full';
   
-  // Additional properties used in the component
+  // Additional properties used in the component (for backward compatibility)
   image?: string; // For emoji/icon fallback
-  organizer?: string; // Event organizer
-  requirements?: string[]; // Event requirements array
-  includes?: string[]; // What's included array
+  long_description?: string; // From additional_info
+  status?: string; // From additional_info
+  time?: string; // Alias for time_range
+  spots?: number; // Computed from capacity - registrations
+  total_spots?: number; // Alias for capacity
 }
 
 export interface FetchEventsResult {
@@ -147,18 +151,19 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
         id,
         title,
         description,
-        long_description,
         date,
-        time,
+        time_range,
         location,
         category,
-        spots,
-        total_spots,
+        capacity,
         price,
         image_url,
-        status,
         additional_info,
-        time_range,
+        gallery,
+        "event schedule",
+        requirements,
+        includes,
+        organizer,
         created_at
       `, { count: 'exact' })
       .order('date', { ascending: true });
@@ -199,7 +204,10 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
 
     // Transform and enhance the data
     const enhancedEvents: EventData[] = data.map((event) => {
-      const registrationCount = (event.total_spots || 0) - (event.spots || 0);
+      // Note: We don't have spots/total_spots in the schema
+      // You'll need to query registrations table to get accurate count
+      // For now, assume 0 registrations (capacity is full available)
+      const registrationCount = 0; // TODO: Query registrations table for actual count
 
       // Parse additional_info JSON to extract extra fields
       let additionalData: any = {};
@@ -213,15 +221,22 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
         console.warn('Failed to parse additional_info for event id', event.id, e);
       }
 
-      // Parse schedule from additional_info or other sources
+      // Parse schedule from "event schedule" column (primary) or additional_info (fallback)
       let parsedSchedule: Array<{ time: string; activity: string }> = [];
       try {
-        const rawSchedule: any = (
-          additionalData.event_schedule || 
-          additionalData.agenda || 
-          additionalData['event schedule'] || 
-          null
-        );
+        // First try the "event schedule" column from database (column name has a space!)
+        let rawSchedule: any = event["event schedule"];
+        
+        // Fallback to additional_info if "event schedule" is not present
+        if (!rawSchedule) {
+          rawSchedule = (
+            additionalData.event_schedule || 
+            additionalData.agenda || 
+            additionalData['event schedule'] || 
+            null
+          );
+        }
+        
         if (Array.isArray(rawSchedule)) {
           parsedSchedule = rawSchedule as Array<{ time: string; activity: string }>;
         } else if (typeof rawSchedule === 'string' && rawSchedule.trim() !== '') {
@@ -251,26 +266,51 @@ export async function fetchEventsFromSupabase(): Promise<FetchEventsResult> {
         console.warn('Failed to parse schedule for event id', event.id, e);
       }
 
+      // Parse requirements from database column or additional_info
+      let requirementsArray: string[] = [];
+      try {
+        const reqData = event.requirements || additionalData.requirements;
+        if (Array.isArray(reqData)) {
+          requirementsArray = reqData as string[];
+        } else if (typeof reqData === 'string' && reqData.trim() !== '') {
+          requirementsArray = JSON.parse(reqData);
+        }
+      } catch (e) {
+        console.warn('Failed to parse requirements for event id', event.id);
+      }
+
+      // Parse includes from database column or additional_info
+      let includesArray: string[] = [];
+      try {
+        const incData = event.includes || additionalData.includes;
+        if (Array.isArray(incData)) {
+          includesArray = incData as string[];
+        } else if (typeof incData === 'string' && incData.trim() !== '') {
+          includesArray = JSON.parse(incData);
+        }
+      } catch (e) {
+        console.warn('Failed to parse includes for event id', event.id);
+      }
+
       return {
         ...event,
         formatted_date: formatEventDate(event.date),
-        formatted_time: event.time || 'Time TBA',
+        formatted_time: event.time_range || 'Time TBA',
         registration_count: registrationCount,
-        availability_status: getAvailabilityStatus(event.spots || 0, event.total_spots || 0),
-        // Extract additional fields from additional_info or provide defaults
+        availability_status: getAvailabilityStatus(event.capacity - registrationCount, event.capacity),
+        // Extract additional fields from database columns or additional_info
         image: additionalData.image || '🎮',
-        organizer: additionalData.organizer || 'Event Organizer',
-        requirements: Array.isArray(additionalData.requirements)
-          ? additionalData.requirements as string[]
-          : (typeof additionalData.requirements === 'string'
-              ? JSON.parse(additionalData.requirements)
-              : []),
-        includes: Array.isArray(additionalData.includes)
-          ? additionalData.includes as string[]
-          : (typeof additionalData.includes === 'string'
-              ? JSON.parse(additionalData.includes)
-              : []),
-        agenda: parsedSchedule
+        organizer: event.organizer || additionalData.organizer || 'Event Organizer',
+        requirements: requirementsArray,
+        includes: includesArray,
+        agenda: parsedSchedule,
+        event_schedule: parsedSchedule,
+        // Backward compatibility fields
+        time: event.time_range,
+        long_description: additionalData.long_description || event.description,
+        status: additionalData.status || 'open',
+        spots: event.capacity - registrationCount,
+        total_spots: event.capacity
       };
     });
 
@@ -330,33 +370,82 @@ export async function fetchEventById(eventId: string): Promise<EventData | null>
       console.warn('Failed to parse additional_info for event id', data.id, e);
     }
 
+    // Parse schedule from "event schedule" column
+    let parsedSchedule: Array<{ time: string; activity: string }> = [];
+    try {
+      let rawSchedule: any = data["event schedule"];
+      if (!rawSchedule) {
+        rawSchedule = additionalData.event_schedule || additionalData.agenda || additionalData['event schedule'] || null;
+      }
+      
+      if (Array.isArray(rawSchedule)) {
+        parsedSchedule = rawSchedule as Array<{ time: string; activity: string }>;
+      } else if (typeof rawSchedule === 'string' && rawSchedule.trim() !== '') {
+        const lines = rawSchedule.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        parsedSchedule = lines.map((line) => {
+          const rangeMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?\s*[-–—]\s*\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+          if (rangeMatch) {
+            return { time: formatTimeRange(rangeMatch[1]), activity: rangeMatch[2].trim() };
+          }
+          const singleMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+          if (singleMatch) {
+            return { time: formatSingleTime(singleMatch[1]), activity: singleMatch[2].trim() };
+          }
+          return { time: '', activity: line };
+        }).filter(item => item.activity);
+      }
+    } catch (e) {
+      console.warn('Failed to parse schedule for event id', data.id);
+    }
+
+    // Parse requirements
+    let requirementsArray: string[] = [];
+    try {
+      const reqData = data.requirements || additionalData.requirements;
+      if (Array.isArray(reqData)) {
+        requirementsArray = reqData as string[];
+      } else if (typeof reqData === 'string' && reqData.trim() !== '') {
+        requirementsArray = JSON.parse(reqData);
+      }
+    } catch (e) {
+      console.warn('Failed to parse requirements for event id', data.id);
+    }
+
+    // Parse includes
+    let includesArray: string[] = [];
+    try {
+      const incData = data.includes || additionalData.includes;
+      if (Array.isArray(incData)) {
+        includesArray = incData as string[];
+      } else if (typeof incData === 'string' && incData.trim() !== '') {
+        includesArray = JSON.parse(incData);
+      }
+    } catch (e) {
+      console.warn('Failed to parse includes for event id', data.id);
+    }
+    
     // Transform the data
-    const registrationCount = (data.total_spots || 0) - (data.spots || 0);
+    const registrationCount = 0; // TODO: Query registrations table for actual count
     
     return {
       ...data,
       formatted_date: formatEventDate(data.date),
-      formatted_time: data.time || 'Time TBA',
+      formatted_time: data.time_range || 'Time TBA',
       registration_count: registrationCount,
-      availability_status: getAvailabilityStatus(data.spots || 0, data.total_spots || 0),
-      // Extract additional fields from additional_info or provide defaults
+      availability_status: getAvailabilityStatus(data.capacity - registrationCount, data.capacity),
+      // Extract additional fields from database columns or additional_info
       image: additionalData.image || '🎮',
-      organizer: additionalData.organizer || 'Event Organizer',
-      requirements: Array.isArray(additionalData.requirements) 
-        ? additionalData.requirements as string[]
-        : (typeof additionalData.requirements === 'string' 
-            ? JSON.parse(additionalData.requirements) 
-            : []),
-      includes: Array.isArray(additionalData.includes)
-        ? additionalData.includes as string[]
-        : (typeof additionalData.includes === 'string'
-            ? JSON.parse(additionalData.includes)
-            : []),
-      agenda: Array.isArray(additionalData.agenda)
-        ? additionalData.agenda as Array<{ time: string; activity: string }>
-        : (typeof additionalData.agenda === 'string'
-            ? JSON.parse(additionalData.agenda)
-            : [])
+      organizer: data.organizer || additionalData.organizer || 'Event Organizer',
+      requirements: requirementsArray,
+      includes: includesArray,
+      agenda: parsedSchedule,
+      event_schedule: parsedSchedule,
+      // Backward compatibility fields
+      time: data.time_range,
+      long_description: additionalData.long_description || data.description,
+      status: additionalData.status || 'open',
+      spots: data.capacity - registrationCount,
+      total_spots: data.capacity
     };
 
   } catch (error) {

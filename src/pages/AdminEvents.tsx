@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ChangeEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,7 @@ interface AdminEventRow {
 }
 
 export default function AdminEvents() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState<EventForm>(initialForm);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | string | null>(null);
@@ -163,6 +165,41 @@ export default function AdminEvents() {
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  // Auto-load event for editing from URL params
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && events.length > 0) {
+      const eventToEdit = events.find(ev => String(ev.id) === editId);
+      if (eventToEdit) {
+        console.log('Auto-loading event for edit from URL:', eventToEdit);
+        const displayDate = new Date(eventToEdit.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        const formData = {
+          title: eventToEdit.title || '',
+          description: eventToEdit.description || '',
+          date: displayDate,
+          time_range: eventToEdit.time_range || '',
+          location: eventToEdit.location || '',
+          category: (eventToEdit.category as any) || 'social',
+          price: eventToEdit.price || '',
+          organizer: eventToEdit.organizer || '',
+          capacity: eventToEdit.capacity ?? null,
+          requirements: eventToEdit.requirements && eventToEdit.requirements.length ? [...eventToEdit.requirements] : [''],
+          includes: eventToEdit.includes && eventToEdit.includes.length ? [...eventToEdit.includes] : [''],
+          agenda: eventToEdit.agenda && eventToEdit.agenda.length ? [...eventToEdit.agenda] : [{ time: '', activity: '' }]
+        };
+        
+        setForm(formData);
+        setDateRaw(eventToEdit.date);
+        setEditingId(eventToEdit.id);
+        // Clear the URL param after loading
+        setSearchParams({});
+        // Scroll to top to show the form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [searchParams, events, setSearchParams]);
 
   const updateArrayField = (field: 'requirements' | 'includes', index: number, value: string) => {
     const newArray = [...form[field]];
@@ -306,12 +343,15 @@ export default function AdminEvents() {
         gallery: null, // Can be added later if you wire a multi-image uploader
       };
 
-      // If editing, include id to trigger update via upsert
-      if (editingId) eventData.id = editingId;
-
+      // Persist to DB (update when editing, insert otherwise)
       let dbOpError: any = null;
       if (editingId) {
-        const { error } = await supabase.from('events').upsert([eventData as any]);
+        // Do not send id field on update payload; filter by id instead
+        const { id, ...updatePayload } = eventData as any;
+        const { error } = await supabase
+          .from('events')
+          .update(updatePayload)
+          .eq('id', String(editingId));
         dbOpError = error;
       } else {
         const { error } = await supabase.from('events').insert([eventData as any]);
@@ -324,7 +364,10 @@ export default function AdminEvents() {
           eventData['event schedule'] = eventData.event_schedule;
           delete eventData.event_schedule;
           if (editingId) {
-            const { error: retryErr } = await supabase.from('events').upsert([eventData as any]);
+            const { error: retryErr } = await supabase
+              .from('events')
+              .update(eventData as any)
+              .eq('id', String(editingId));
             if (retryErr) throw retryErr;
           } else {
             const { error: retryErr } = await supabase.from('events').insert([eventData as any]);

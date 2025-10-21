@@ -285,6 +285,32 @@ export const getEvents = async (): Promise<Event[]> => {
     // Transform database data to match Event interface using provided schema
     const transformedData = data.map((row: any) => {
       const info = (row.additional_info || {}) as { long_description?: string; organizer?: string; status?: string };
+      
+      // Parse event_schedule (column name is "event schedule" with a space)
+      let parsedSchedule: Array<{ time: string; activity: string }> = [];
+      try {
+        const rawSchedule: any = row["event schedule"] !== undefined ? row["event schedule"] : row.event_schedule !== undefined ? row.event_schedule : row.agenda;
+        
+        if (Array.isArray(rawSchedule)) {
+          parsedSchedule = rawSchedule as Array<{ time: string; activity: string }>;
+        } else if (typeof rawSchedule === 'string' && rawSchedule.trim() !== '') {
+          const lines = rawSchedule.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          parsedSchedule = lines.map((line) => {
+            const rangeMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?\s*[-–—]\s*\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+            if (rangeMatch) {
+              return { time: formatTimeRange(rangeMatch[1]), activity: rangeMatch[2].trim() };
+            }
+            const singleMatch = line.match(/^(\d{1,2}:\d{2}(?:\s*(?:AM|PM))?)(?:\s*[-–—:]\s*|\s+)(.+)$/i);
+            if (singleMatch) {
+              return { time: formatSingleTime(singleMatch[1]), activity: singleMatch[2].trim() };
+            }
+            return { time: '', activity: line };
+          }).filter(item => item.activity);
+        }
+      } catch (e) {
+        console.warn('Failed to parse event schedule for event id', row.id, e);
+      }
+      
       return {
         ...row,
         id: row.id?.toString?.() ?? String(row.id),
@@ -293,15 +319,16 @@ export const getEvents = async (): Promise<Event[]> => {
         image: row.image_url || '🎮',
         // Additional info JSON
         long_description: info.long_description || row.description,
-        organizer: info.organizer || row.organizer || 'Games & Connect Team',
+        organizer: row.organizer || info.organizer || 'Games & Connect Team',
         status: info.status || 'open',
+        // Map capacity to spots/total_spots for backward compatibility
+        spots: row.capacity || 0,
+        total_spots: row.capacity || 0,
         // Ensure arrays
         requirements: Array.isArray(row.requirements) ? (row.requirements as string[]) : [],
         includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
-        agenda: Array.isArray(row.event_schedule) ? (row.event_schedule as Array<{ time: string; activity: string }>) : 
-                Array.isArray(row.agenda) ? (row.agenda as Array<{ time: string; activity: string }>) : [],
-        event_schedule: Array.isArray(row.event_schedule) ? (row.event_schedule as Array<{ time: string; activity: string }>) : 
-                       Array.isArray(row.agenda) ? (row.agenda as Array<{ time: string; activity: string }>) : [],
+        agenda: parsedSchedule,
+        event_schedule: parsedSchedule,
         flyer: undefined, // Not in DB schema
         gallery: Array.isArray(row.gallery) ? (row.gallery as string[]) : [],
         // Timestamps
@@ -347,15 +374,16 @@ export const getEventById = async (id: string): Promise<Event | null> => {
     const info = (row.additional_info || {}) as { long_description?: string; organizer?: string; status?: string };
 
     // Normalize/parse event schedule which in DB may exist as:
-    //  - JSONB array column "agenda" (legacy)
-    //  - JSONB or text column "event_schedule"
-    //  - Text column named "event schedule" (with space) containing newline separated items
+    //  - Text column named "event schedule" (with space) - THIS IS THE ACTUAL COLUMN
+    //  - JSONB array column "agenda" (legacy/fallback)
+    //  - JSONB or text column "event_schedule" (fallback)
     let parsedSchedule: Array<{ time: string; activity: string }> = [];
     try {
       const rawSchedule: any = (
+        row['event schedule'] !== undefined ? row['event schedule'] :
         row.event_schedule !== undefined ? row.event_schedule :
         row.agenda !== undefined ? row.agenda :
-        (row['event schedule'] !== undefined ? row['event schedule'] : undefined)
+        undefined
       );
 
       if (Array.isArray(rawSchedule)) {
@@ -398,8 +426,11 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       time: row.time_range || 'Time TBA',
       image: row.image_url || '🎮',
       long_description: info.long_description || row.description,
-      organizer: info.organizer || row.organizer || 'Games & Connect Team',
+      organizer: row.organizer || info.organizer || 'Games & Connect Team',
       status: info.status || 'open',
+      // Map capacity to spots/total_spots for backward compatibility
+      spots: row.capacity || 0,
+      total_spots: row.capacity || 0,
       requirements: Array.isArray(row.requirements) ? (row.requirements as string[]) : [],
       includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
       agenda: parsedSchedule,
