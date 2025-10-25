@@ -39,3 +39,18 @@ debug-*.js
 manual_*_setup.sql
 fix-*.sql
 verify-*.sql
+*_sample_*.sql
+setup_*.sql
+
+# Tutorial and documentation files (keep only README.md)
+*_SETUP*.md
+*_IMPLEMENTATION*.md
+*_FIX*.md
+*_SUMMARY.md
+*_GUIDE*.md
+*DEPLOYMENT*.md
+*INSTRUCTIONS*.md
+*EXPLAINED*.md
+*_TEMPLATE*.md
+*_AUTO_*.md
+*-audit.md
