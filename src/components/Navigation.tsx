@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Calendar, Users, Image, Gamepad2, BookOpen } from 'lucide-react';
+import { Menu, X, Home, Calendar, Users, Image, Gamepad2, BookOpen, Mail } from 'lucide-react';
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +13,7 @@ export const Navigation = () => {
     { name: 'Community', path: '/community', icon: Users },
     { name: 'Teams', path: '/teams', icon: Gamepad2 },
     { name: 'Blog', path: '/blog', icon: BookOpen },
+    { name: 'Contact', path: '/contact', icon: Mail },
   ];
 
   const isActive = (path: string) => location.pathname === path;

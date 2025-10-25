@@ -29,6 +29,7 @@ import TeamYellow from "./pages/TeamYellow";
 import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 import EventsDatabase from "./pages/EventsDatabase";
+import ContactUs from "./pages/ContactUs";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/team-yellow" element={<MainLayout><TeamYellow /></MainLayout>} />
             <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
             <Route path="/events-database" element={<MainLayout><EventsDatabase /></MainLayout>} />
+            <Route path="/contact" element={<MainLayout><ContactUs /></MainLayout>} />
             
             {/* Admin Login Route */}
             <Route path="/admin/login" element={<AdminLogin />} />
