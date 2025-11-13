@@ -291,7 +291,7 @@ export default function HomePage() {
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    REGISTER NOW
+                    GET TICKETS
                   </motion.div>
                 </motion.div>
                 <motion.div 
@@ -471,7 +471,7 @@ export default function HomePage() {
                     className="rounded-full text-base px-8 py-6 bg-primary hover:bg-primary/90"
                     onClick={() => nextEvent ? window.open(getEventUrl(nextEvent.title), '_self') : window.open('/events', '_self')}
                   >
-                    {nextEvent ? `Register for ${nextEvent.title}` : 'Explore Events'}
+                    {nextEvent ? `Get Tickets for ${nextEvent.title}` : 'Explore Events'}
                   </Button>
                 </motion.div>
                 <motion.div

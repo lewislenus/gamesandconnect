@@ -189,7 +189,7 @@ const ContactUs = () => {
                   <p className="text-sm text-slate-300">
                     • View your{' '}
                     <a href="/my-registrations" className="text-orange-400 hover:text-orange-300">
-                      Registrations
+                      Tickets
                     </a>
                   </p>
                   <p className="text-sm text-slate-300">

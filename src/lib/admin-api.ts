@@ -177,7 +177,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
         activities.push({
           id: `reg_${reg.id}`,
           type: 'registration',
-          description: `${fullName} registered for ${(reg.events as any)?.title || 'an event'}`,
+          description: `${fullName} purchased ticket for ${(reg.events as any)?.title || 'an event'}`,
           timestamp: reg.created_at,
           user: fullName,
           event: (reg.events as any)?.title
@@ -197,7 +197,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
       {
         id: '1',
         type: 'registration',
-        description: 'John Doe registered for Friday Game Night',
+        description: 'John Doe purchased ticket for Friday Game Night',
         timestamp: new Date(Date.now() - 3600000).toISOString(),
         user: 'John Doe',
         event: 'Friday Game Night'
@@ -211,7 +211,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
       {
         id: '3',
         type: 'registration',
-        description: 'Sarah Smith registered for Trivia Night',
+        description: 'Sarah Smith purchased ticket for Trivia Night',
         timestamp: new Date(Date.now() - 10800000).toISOString(),
         user: 'Sarah Smith',
         event: 'Trivia Night'

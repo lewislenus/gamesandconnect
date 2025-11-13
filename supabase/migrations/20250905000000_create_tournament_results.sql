@@ -1,7 +1,7 @@
 -- Create tournament results table to track winning teams
 CREATE TABLE IF NOT EXISTS public.tournament_results (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    event_id BIGINT REFERENCES public.events(id) ON DELETE CASCADE,
+    event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
     tournament_name TEXT NOT NULL,
     game_type TEXT NOT NULL, -- 'FIFA', 'Call of Duty', 'Mobile Legends', 'Board Games', etc.
     winning_team TEXT NOT NULL, -- 'red', 'blue', 'green', 'yellow'

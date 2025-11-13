@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Settings,
   Home,
-  BookOpen
+  BookOpen,
+  Trophy
 } from 'lucide-react';
 
 export default function AdminNavigation() {
@@ -45,6 +46,12 @@ export default function AdminNavigation() {
       label: 'Blog',
       icon: BookOpen,
       description: 'Manage blog posts and content'
+    },
+    {
+      href: '/admin/game-day',
+      label: 'Game Day',
+      icon: Trophy,
+      description: 'Manage Game Day gallery'
     }
   ];
 

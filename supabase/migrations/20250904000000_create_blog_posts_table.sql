@@ -49,8 +49,8 @@ CREATE POLICY "Public can view published blog posts" ON blog_posts
 -- Policy: Allow authenticated admin users to manage all blog posts
 CREATE POLICY "Admin users can manage blog posts" ON blog_posts
     FOR ALL USING (
-        auth.jwt() ->> 'email' IN (
-            SELECT email FROM admin_users WHERE is_active = true
+        auth.uid() IN (
+            SELECT user_id FROM admin_users WHERE is_active = true
         )
     );
 

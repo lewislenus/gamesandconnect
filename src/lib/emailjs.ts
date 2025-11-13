@@ -102,7 +102,12 @@ export class EmailService {
       // Check if EmailJS is configured
       const configStatus = EmailService.getConfigurationStatus();
       if (!configStatus.configured) {
-        console.warn('EmailJS not configured:', configStatus.message);
+        console.warn('📧 EmailJS not configured - emails will not be sent');
+        console.info('ℹ️ To enable email notifications:');
+        console.info('   1. Sign up at https://www.emailjs.com/');
+        console.info('   2. Follow setup guide in EMAILJS_SETUP_GUIDE.md');
+        console.info('   3. Add credentials to .env.local');
+        console.info('   4. Restart dev server');
         return false;
       }
 
@@ -129,10 +134,18 @@ export class EmailService {
         templateParams
       );
 
-      console.log('Email sent successfully:', response);
+      console.log('✅ Email sent successfully:', response);
       return response.status === 200;
-    } catch (error) {
-      console.error('Failed to send email:', error);
+    } catch (error: any) {
+      // Don't log error stack for configuration issues
+      if (error?.status === 404 || error?.text?.includes('Account not found')) {
+        console.warn('📧 EmailJS account not configured - emails will not be sent');
+        console.info('ℹ️ Registration was successful! To enable email notifications:');
+        console.info('   1. Sign up at https://www.emailjs.com/');
+        console.info('   2. See EMAILJS_SETUP_GUIDE.md for setup steps');
+      } else {
+        console.error('❌ Failed to send email:', error?.message || error);
+      }
       return false;
     }
   }
@@ -200,7 +213,7 @@ export class EmailService {
       // Check if EmailJS is configured
       const configStatus = EmailService.getConfigurationStatus();
       if (!configStatus.configured) {
-        console.warn('EmailJS not configured for admin notifications:', configStatus.message);
+        console.warn('📧 EmailJS not configured - admin notification will not be sent');
         return false;
       }
 
@@ -243,10 +256,15 @@ export class EmailService {
         templateParams
       );
 
-      console.log('Admin notification email sent successfully:', response);
+      console.log('✅ Admin notification email sent successfully:', response);
       return response.status === 200;
-    } catch (error) {
-      console.error('Failed to send admin notification email:', error);
+    } catch (error: any) {
+      // Don't log error stack for configuration issues
+      if (error?.status === 404 || error?.text?.includes('Account not found')) {
+        console.warn('📧 EmailJS not configured - admin notification will not be sent');
+      } else {
+        console.error('❌ Failed to send admin notification email:', error?.message || error);
+      }
       return false;
     }
   }

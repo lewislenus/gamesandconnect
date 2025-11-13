@@ -2,9 +2,13 @@
 -- This migration clears existing events and inserts the real event data from CSV
 
 -- First, clear existing events data
-DELETE FROM public.registrations; -- Clear registrations first due to foreign key constraints
-DELETE FROM public.event_feedback; -- Clear feedback first due to foreign key constraints  
-DELETE FROM public.events; -- Clear events
+-- Using TRUNCATE to avoid trigger issues and for better performance
+TRUNCATE TABLE public.registration_logs CASCADE;
+TRUNCATE TABLE public.event_feedback CASCADE;
+TRUNCATE TABLE public.waitlist CASCADE;
+TRUNCATE TABLE public.registrations CASCADE;
+TRUNCATE TABLE public.ticket_templates CASCADE;
+TRUNCATE TABLE public.events CASCADE;
 
 -- Add new columns if they don't exist
 DO $$ 
@@ -37,7 +41,6 @@ END $$;
 
 -- Insert events from CSV data
 INSERT INTO public.events (
-    id,
     title,
     description,
     long_description,
@@ -59,11 +62,9 @@ INSERT INTO public.events (
     requirements,
     includes,
     agenda,
-    flyer,
-    created_at
+    flyer
 ) VALUES 
 (
-    '1'::uuid,
     'Games Day at Akosombo',
     'Join us for an exciting day of outdoor games and activities at the beautiful Akosombo. Enjoy team sports, water activities, and more in this scenic location.',
     'Experience the perfect blend of adventure and relaxation at one of Ghana''s most beautiful locations. Games Day at Akosombo offers an exciting mix of outdoor activities including team sports, water activities, and scenic exploration. Located in the Eastern Region, Akosombo provides the perfect backdrop for a day of fun, friendship, and unforgettable memories. Whether you''re looking to try new activities, meet new people, or simply enjoy nature, this event has something for everyone.',
@@ -94,11 +95,9 @@ INSERT INTO public.events (
         {"time": "5:00 PM", "activity": "Wrap-up and departure"},
         {"time": "6:00 PM", "activity": "Arrival back in Accra"}
     ]'::jsonb,
-    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/akosombo-games-flyer.pdf", "alt": "Games Day at Akosombo Event Flyer"}'::jsonb,
-    '2025-04-12 17:41:27.545299+00'::timestamp with time zone
+    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/akosombo-games-flyer.pdf", "alt": "Games Day at Akosombo Event Flyer"}'::jsonb
 ),
 (
-    '16'::uuid,
     'Beach Day & Games',
     'A day of fun beach games, swimming, and networking at Bojo Beach. The event included volleyball, tug of war, and sand castle building competitions with prizes for winners.',
     'Experience the ultimate beach day combining sun, sand, sports, and socializing! Our Beach Day & Games event at beautiful Bojo Beach offers the perfect escape from city life. Participate in exciting beach volleyball tournaments, competitive tug of war matches, and creative sand castle building competitions. Whether you''re a sports enthusiast or just love beach vibes, this event promises fun activities, great food, and amazing new connections.',
@@ -130,11 +129,9 @@ INSERT INTO public.events (
         {"time": "4:30 PM", "activity": "Prize ceremony and group photos"},
         {"time": "5:00 PM", "activity": "Event wrap-up"}
     ]'::jsonb,
-    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/beach-day-games-flyer.pdf", "alt": "Beach Day & Games Event Flyer"}'::jsonb,
-    '2025-04-17 16:56:48.307041+00'::timestamp with time zone
+    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/beach-day-games-flyer.pdf", "alt": "Beach Day & Games Event Flyer"}'::jsonb
 ),
 (
-    '17'::uuid,
     'Aburi Botanical Gardens Hike',
     'A refreshing hike through the beautiful Aburi Botanical Gardens followed by a picnic lunch and team-building activities. Participants enjoyed the serene environment and made new connections.',
     'Escape the hustle and bustle of city life with a rejuvenating hike through the stunning Aburi Botanical Gardens. This nature-focused event combines physical activity with environmental appreciation and community building. Explore diverse plant species, enjoy scenic mountain views, and participate in team-building activities designed to foster new friendships. The day concludes with a delightful picnic lunch surrounded by nature''s beauty.',
@@ -165,11 +162,9 @@ INSERT INTO public.events (
         {"time": "3:30 PM", "activity": "Group reflection and networking"},
         {"time": "4:00 PM", "activity": "Departure back to Accra"}
     ]'::jsonb,
-    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/aburi-gardens-hike-flyer.pdf", "alt": "Aburi Botanical Gardens Hike Event Flyer"}'::jsonb,
-    '2025-04-17 16:56:48.307041+00'::timestamp with time zone
+    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/aburi-gardens-hike-flyer.pdf", "alt": "Aburi Botanical Gardens Hike Event Flyer"}'::jsonb
 ),
 (
-    '22'::uuid,
     'Two Days in Cape Coast',
     'Step out of the city and into the refreshing breeze of Cape Coast! This two-day getaway is packed with adventure, culture, nature, and great vibes with amazing people.',
     'Embark on an unforgettable two-day journey to Cape Coast, where history, nature, and adventure converge! Experience the thrill of Kakum National Park''s canopy walk, explore the historical significance of Cape Coast and Elmina Castles, encounter crocodiles at Hans Cottage, and enjoy beach relaxation. This comprehensive getaway includes comfortable accommodation, all meals, transportation, and guided tours, making it the perfect escape for culture enthusiasts and adventure seekers alike.',
@@ -204,8 +199,7 @@ INSERT INTO public.events (
         {"time": "Saturday 3:00 PM", "activity": "Pool Hangout"},
         {"time": "Saturday 5:00 PM", "activity": "Depart for Accra"}
     ]'::jsonb,
-    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/cape-coast-two-days-flyer.pdf", "alt": "Two Days in Cape Coast Event Flyer"}'::jsonb,
-    '2025-05-06 16:38:31.344602+00'::timestamp with time zone
+    '{"url": "/api/placeholder/600/800", "downloadUrl": "/downloads/cape-coast-two-days-flyer.pdf", "alt": "Two Days in Cape Coast Event Flyer"}'::jsonb
 );
 
 -- Update spots calculation for realistic registration numbers

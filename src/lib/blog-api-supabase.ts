@@ -39,7 +39,7 @@ We're thrilled to have you join our vibrant community! Games & Connect is more t
 ## Getting Started
 
 1. Browse our upcoming events
-2. Register for activities that interest you
+2. Get tickets for activities that interest you
 3. Connect with other members
 4. Share your own experiences and ideas
 

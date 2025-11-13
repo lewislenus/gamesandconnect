@@ -12,7 +12,8 @@ BEGIN
   -- Define admin emails here
   RETURN user_email IN (
     'admin@gamesconnect.com',
-    'admin@example.com'
+    'admin@example.com',
+    'gamesandconnectgh@gmail.com'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

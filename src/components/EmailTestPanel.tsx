@@ -358,7 +358,7 @@ export default function EmailTestPanel() {
             <CardTitle>Admin Notification Test</CardTitle>
           </div>
           <CardDescription>
-            Test admin notifications sent when users register for events
+            Test admin notifications sent when users purchase tickets for events
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -6,7 +6,6 @@ DELETE FROM public.events;
 
 -- Insert comprehensive event data
 INSERT INTO public.events (
-    id,
     title,
     description,
     long_description,
@@ -25,7 +24,6 @@ INSERT INTO public.events (
     agenda,
     flyer
 ) VALUES (
-    '1',
     'Friday Game Night & Connect',
     'Weekly game night mixing digital and board games with networking',
     'Join our signature Friday night where play meets connection! Start with FIFA and Call of Duty tournaments, transition to board games like Ludo and Oware, then wrap up with speed networking and community building activities. This event perfectly embodies our "play, travel, connect" motto by bringing together gaming enthusiasts, travel lovers, and networking pros in one exciting evening.',
@@ -51,7 +49,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/game-night-connect", "downloadUrl": "/downloads/game-night-connect-flyer.pdf", "alt": "Friday Game Night & Connect Event Flyer"}'
 ),
 (
-    '2',
     'Kakum Forest Adventure & Cultural Discovery',
     'Canopy walk adventure with local cultural immersion and team building',
     'Experience Ghana''s natural beauty and rich culture in this 2-day adventure! Walk among the treetops at Kakum National Park, learn about local Fante traditions, participate in cooking workshops, and bond with fellow adventurers through team-building activities. This journey perfectly combines our travel and connect pillars while adding elements of cultural exploration and personal growth.',
@@ -82,7 +79,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/kakum-adventure", "downloadUrl": "/downloads/kakum-adventure-flyer.pdf", "alt": "Kakum Forest Adventure Event Flyer"}'
 ),
 (
-    '3',
     'Esports Championship & Tech Talk',
     'FIFA & Mobile Legends tournament with tech industry networking',
     'Level up your gaming skills and career prospects! Compete in our biggest esports championship featuring FIFA 24 and Mobile Legends, followed by inspiring talks from Ghana''s tech industry leaders. This unique event blends competitive gaming with professional development, connecting gamers with potential mentors, employers, and collaborators in the tech space.',
@@ -110,7 +106,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/esports-championship", "downloadUrl": "/downloads/esports-championship-flyer.pdf", "alt": "Esports Championship & Tech Talk Event Flyer"}'
 ),
 (
-    '4',
     'Kumasi Heritage Trail & Connect',
     'Explore Ashanti culture, visit historic sites, and build connections',
     'Discover the rich heritage of the Ashanti Kingdom while building meaningful connections with fellow culture enthusiasts. Visit the Manhyia Palace, explore Kejetia Market, experience traditional Kente weaving, and enjoy authentic Ashanti cuisine. This cultural journey combines education, adventure, and community building in Ghana''s cultural capital.',
@@ -142,7 +137,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/kumasi-heritage", "downloadUrl": "/downloads/kumasi-heritage-flyer.pdf", "alt": "Kumasi Heritage Trail Event Flyer"}'
 ),
 (
-    '5',
     'Young Professionals Mixer & Board Game Night',
     'Network with young professionals while enjoying strategic board games',
     'Perfect blend of professional networking and strategic gaming! Connect with ambitious young professionals from various industries while enjoying modern board games like Settlers of Catan, Ticket to Ride, and local favorites. This event creates a relaxed environment for meaningful professional relationships to flourish through the shared joy of strategic thinking and friendly competition.',
@@ -169,7 +163,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/professionals-mixer", "downloadUrl": "/downloads/professionals-mixer-flyer.pdf", "alt": "Young Professionals Mixer Event Flyer"}'
 ),
 (
-    '6',
     'Trivia Friday Challenge',
     'Weekly trivia night with prizes and community building',
     'Test your knowledge and make new friends every Friday! Our trivia night covers everything from pop culture and sports to Ghanaian history and current affairs. Teams of up to 4 people compete for amazing prizes while enjoying refreshments and great company. Whether you''re a trivia pro or just love learning new things, this weekly event is the perfect way to wind down your week and connect with your community.',
@@ -196,7 +189,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/trivia-friday", "downloadUrl": "/downloads/trivia-friday-flyer.pdf", "alt": "Trivia Friday Challenge Event Flyer"}'
 ),
 (
-    '7',
     'Beach Volleyball & Community Cleanup',
     'Sports, environmental action, and beachside networking',
     'Combine fitness, environmental responsibility, and community building at beautiful Laboma Beach! Start with a beach cleanup to protect our coastline, then enjoy competitive volleyball tournaments with teams of all skill levels. End the day with a beachside BBQ and sunset networking session. This event perfectly captures our community''s values of taking care of our environment while staying active and connected.',
@@ -224,7 +216,6 @@ INSERT INTO public.events (
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/beach-volleyball", "downloadUrl": "/downloads/beach-volleyball-flyer.pdf", "alt": "Beach Volleyball & Community Cleanup Event Flyer"}'
 ),
 (
-    '8',
     'International Gaming Championship',
     'Multi-platform gaming tournament with international livestream',
     'Join Ghana''s biggest international gaming championship! Compete in FIFA 24, Call of Duty, and Mobile Legends tournaments while being livestreamed to a global audience. This professional-level event features cash prizes, sponsorship opportunities, and networking with gaming industry professionals. Whether you''re an aspiring pro gamer or just love competitive gaming, this championship offers an exciting platform to showcase your skills.',
@@ -253,9 +244,6 @@ INSERT INTO public.events (
     ]',
     '{"url": "https://res.cloudinary.com/games-and-connect/image/upload/v1/flyers/international-gaming", "downloadUrl": "/downloads/international-gaming-flyer.pdf", "alt": "International Gaming Championship Event Flyer"}'
 );
-
--- Update event IDs to be UUIDs (regenerate them)
-UPDATE public.events SET id = gen_random_uuid();
 
 -- Create some sample registrations to make the events look active
 -- Note: This would normally be done through the registration API, but for demo purposes we'll insert some

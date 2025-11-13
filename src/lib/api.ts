@@ -1,5 +1,6 @@
 import { supabase } from '../integrations/supabase/client';
 import { generateEventSlug } from './utils';
+import { sanitizeImageUrl, sanitizeImageArray, getCategoryFallbackImage } from './image-utils';
 
 // Helper functions for time formatting
 function formatSingleTime(timeStr: string): string {
@@ -316,7 +317,8 @@ export const getEvents = async (): Promise<Event[]> => {
         id: row.id?.toString?.() ?? String(row.id),
         // Map DB columns to UI fields
         time: row.time_range || 'Time TBA',
-        image: row.image_url || '🎮',
+        image: row.image_url ? sanitizeImageUrl(row.image_url) : getCategoryFallbackImage(row.category),
+        image_url: row.image_url ? sanitizeImageUrl(row.image_url) : getCategoryFallbackImage(row.category),
         // Additional info JSON
         long_description: info.long_description || row.description,
         organizer: row.organizer || info.organizer || 'Games & Connect Team',
@@ -330,7 +332,7 @@ export const getEvents = async (): Promise<Event[]> => {
         agenda: parsedSchedule,
         event_schedule: parsedSchedule,
         flyer: undefined, // Not in DB schema
-        gallery: Array.isArray(row.gallery) ? (row.gallery as string[]) : [],
+        gallery: sanitizeImageArray(row.gallery),
         // Timestamps
         created_at: row.created_at || new Date().toISOString(),
         updated_at: row.created_at || new Date().toISOString(), // Use created_at as fallback
@@ -424,7 +426,8 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       ...row,
       id: row.id?.toString?.() ?? String(row.id),
       time: row.time_range || 'Time TBA',
-      image: row.image_url || '🎮',
+      image: row.image_url ? sanitizeImageUrl(row.image_url) : getCategoryFallbackImage(row.category),
+      image_url: row.image_url ? sanitizeImageUrl(row.image_url) : getCategoryFallbackImage(row.category),
       long_description: info.long_description || row.description,
       organizer: row.organizer || info.organizer || 'Games & Connect Team',
       status: info.status || 'open',
@@ -436,7 +439,7 @@ export const getEventById = async (id: string): Promise<Event | null> => {
       agenda: parsedSchedule,
       event_schedule: parsedSchedule,
       flyer: undefined, // Not in DB schema
-      gallery: Array.isArray((row as any).gallery) ? ((row as any).gallery as string[]) : [],
+      gallery: sanitizeImageArray((row as any).gallery),
       created_at: row.created_at || new Date().toISOString(),
       updated_at: row.created_at || new Date().toISOString(),
     };

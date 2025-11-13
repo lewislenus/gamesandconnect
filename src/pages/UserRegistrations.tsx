@@ -36,7 +36,7 @@ export default function UserRegistrations() {
         console.error('Failed to load registrations:', error);
         toast({
           title: "Error Loading Registrations",
-          description: "There was a problem loading your registrations.",
+          description: "There was a problem loading your tickets.",
           variant: "destructive",
         });
       } finally {
@@ -118,7 +118,7 @@ export default function UserRegistrations() {
   if (loading) {
     return (
       <div className="container py-8">
-        <h2 className="text-3xl font-bold mb-8">My Registrations</h2>
+        <h2 className="text-3xl font-bold mb-8">My Tickets</h2>
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
@@ -145,19 +145,19 @@ export default function UserRegistrations() {
 
   return (
     <div className="container py-8">
-      <h2 className="text-3xl font-bold mb-8">My Registrations</h2>
+      <h2 className="text-3xl font-bold mb-8">My Tickets</h2>
       
       {registrations.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>No Registrations Found</CardTitle>
+            <CardTitle>No Tickets Found</CardTitle>
             <CardDescription>
-              You haven't registered for any events yet.
+              You haven't purchased any tickets yet.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Browse our upcoming events and register to see them here.
+              Browse our upcoming events and get tickets to see them here.
             </p>
             <Button asChild>
               <Link to="/events">Browse Events</Link>

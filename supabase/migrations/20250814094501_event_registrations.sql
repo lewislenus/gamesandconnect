@@ -20,6 +20,29 @@ CREATE TABLE public.registrations (
     attended_at TIMESTAMP WITH TIME ZONE
 );
 
+-- Create admin_users table first (needed for policies below)
+CREATE TABLE IF NOT EXISTS public.admin_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    UNIQUE(user_id)
+);
+
+-- Enable RLS on admin_users
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+
+-- Only super admins can manage admin users
+CREATE POLICY "Only super admins can manage admin users"
+ON public.admin_users
+FOR ALL
+USING (
+    auth.uid() IN (
+        SELECT user_id FROM public.admin_users WHERE is_active = true
+    )
+);
+
 -- Add RLS (Row Level Security) policies
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
 
@@ -47,29 +70,6 @@ WITH CHECK (auth.uid() = user_id AND status != 'cancelled');
 CREATE POLICY "Admins can view all registrations" 
 ON public.registrations
 FOR ALL 
-USING (
-    auth.uid() IN (
-        SELECT user_id FROM public.admin_users WHERE is_active = true
-    )
-);
-
--- Create admin_users table if it doesn't exist
-CREATE TABLE IF NOT EXISTS public.admin_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-    UNIQUE(user_id)
-);
-
--- Enable RLS on admin_users
-ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
-
--- Only super admins can manage admin users
-CREATE POLICY "Only super admins can manage admin users"
-ON public.admin_users
-FOR ALL
 USING (
     auth.uid() IN (
         SELECT user_id FROM public.admin_users WHERE is_active = true
@@ -437,8 +437,8 @@ SELECT
     COALESCE(e.rating, 0) AS average_rating,
     COUNT(DISTINCT f.id) AS feedback_count,
     CASE
-        WHEN e.date < CURRENT_DATE THEN 'past'
-        WHEN e.date = CURRENT_DATE THEN 'today'
+        WHEN e.date::date < CURRENT_DATE THEN 'past'
+        WHEN e.date::date = CURRENT_DATE THEN 'today'
         ELSE 'upcoming'
     END AS event_status
 FROM
@@ -451,16 +451,3 @@ LEFT JOIN
     public.event_feedback f ON e.id = f.event_id
 GROUP BY
     e.id, e.title, e.date, e.category, e.total_spots, e.spots, e.rating;
-
--- Add RLS to event_statistics view
-ALTER VIEW public.event_statistics ENABLE ROW LEVEL SECURITY;
-
--- Allow admins to view all statistics
-CREATE POLICY "Admins can view all event statistics"
-ON public.event_statistics
-FOR SELECT
-USING (
-    auth.uid() IN (
-        SELECT user_id FROM public.admin_users WHERE is_active = true
-    )
-);

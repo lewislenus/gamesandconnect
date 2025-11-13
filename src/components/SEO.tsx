@@ -17,7 +17,7 @@ interface SEOProps {
 
 const DEFAULT_META = {
   title: 'Games & Connect - Join Ghana\'s Premier Gaming Community',
-  description: 'Connect with fellow gamers across Ghana! Join exciting gaming events, trivia nights, tournaments, and community adventures. Register for upcoming events now!',
+  description: 'Connect with fellow gamers across Ghana! Join exciting gaming events, trivia nights, tournaments, and community adventures. Get your tickets for upcoming events now!',
   keywords: 'gaming community Ghana, gaming events Accra, FIFA tournament, trivia night, esports Ghana, gaming meetups, community events, multiplayer gaming, video games Ghana',
   image: 'https://res.cloudinary.com/drkjnrvtu/image/upload/c_fill,w_1200,h_630,g_center,q_auto,f_auto/v1756502370/games_and_connect_og_banner.jpg',
   url: 'https://gamesandconnect.netlify.app',

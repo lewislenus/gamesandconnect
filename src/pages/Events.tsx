@@ -134,7 +134,7 @@ export default function Events() {
     <>
       <SEO 
         title="Gaming Events"
-        description="Discover exciting gaming events in Ghana! Join FIFA tournaments, trivia nights, community adventures, and more. Register now for upcoming events in Accra and beyond."
+        description="Discover exciting gaming events in Ghana! Join FIFA tournaments, trivia nights, community adventures, and more. Get your tickets now for upcoming events in Accra and beyond."
         keywords="gaming events Ghana, FIFA tournament Accra, trivia night, gaming meetups, esports events, gaming tournaments, video game events, community gaming Ghana"
         url="https://gamesandconnect.netlify.app/events"
       />

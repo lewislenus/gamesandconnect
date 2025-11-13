@@ -15,6 +15,7 @@ import BlogPost from "./pages/BlogPost";
 
 import EventDetails from "./pages/EventDetails";
 import UserRegistrations from "./pages/UserRegistrations";
+import Checkout from "./pages/Checkout";
 import AdminLogin from "./pages/AdminLogin";
 import AdminEvents from "./pages/AdminEvents";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -30,6 +31,8 @@ import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
 import EventsDatabase from "./pages/EventsDatabase";
 import ContactUs from "./pages/ContactUs";
+import GameDay from "./pages/GameDay";
+import AdminGameDay from "./pages/AdminGameDay";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +64,7 @@ const App = () => (
             <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
             <Route path="/events" element={<MainLayout><Events /></MainLayout>} />
             <Route path="/events/:slug" element={<MainLayout><EventDetails /></MainLayout>} />
+            <Route path="/checkout/:eventId" element={<MainLayout><Checkout /></MainLayout>} />
             <Route path="/community" element={<MainLayout><Community /></MainLayout>} />
             <Route path="/blog" element={<MainLayout><Blog /></MainLayout>} />
             <Route path="/blog/:slug" element={<MainLayout><BlogPost /></MainLayout>} />
@@ -74,6 +78,7 @@ const App = () => (
             <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
             <Route path="/events-database" element={<MainLayout><EventsDatabase /></MainLayout>} />
             <Route path="/contact" element={<MainLayout><ContactUs /></MainLayout>} />
+            <Route path="/game-day" element={<MainLayout><GameDay /></MainLayout>} />
             
             {/* Admin Login Route */}
             <Route path="/admin/login" element={<AdminLogin />} />
@@ -102,6 +107,11 @@ const App = () => (
             <Route path="/admin/blog" element={
               <ProtectedRoute requireAdmin={true}>
                 <AdminLayout><AdminBlog /></AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/game-day" element={
+              <ProtectedRoute requireAdmin={true}>
+                <AdminLayout><AdminGameDay /></AdminLayout>
               </ProtectedRoute>
             } />
             

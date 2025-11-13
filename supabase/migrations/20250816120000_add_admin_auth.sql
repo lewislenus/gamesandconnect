@@ -78,19 +78,24 @@ CREATE TRIGGER update_profiles_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Insert default admin user if it doesn't exist
-INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
-VALUES (
-  gen_random_uuid(),
-  'admin@gamesconnect.com',
-  crypt('admin123', gen_salt('bf')),
-  NOW(),
-  NOW(),
-  NOW(),
-  '{"provider": "email", "providers": ["email"]}',
-  '{"full_name": "Admin User"}',
-  false,
-  'authenticated'
-) ON CONFLICT (email) DO NOTHING;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@gamesconnect.com') THEN
+    INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, role)
+    VALUES (
+      gen_random_uuid(),
+      'admin@gamesconnect.com',
+      crypt('admin123', gen_salt('bf')),
+      NOW(),
+      NOW(),
+      NOW(),
+      '{"provider": "email", "providers": ["email"]}',
+      '{"full_name": "Admin User"}',
+      false,
+      'authenticated'
+    );
+  END IF;
+END $$;
 
 -- Create admin profile manually if needed
 INSERT INTO profiles (id, email, full_name, role)
